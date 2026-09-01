@@ -1,6 +1,6 @@
 export const translations = {
   en: {
-    title: 'News Station',
+    title: 'Campus News Station',
     subtitle: 'Listen to your favorite podcasts',
     theme: 'Theme',
     language: 'Language',
@@ -16,7 +16,7 @@ export const translations = {
     pause: 'Pause',
   },
   ko: {
-    title: '뉴스 스테이션',
+    title: '캠퍼스 뉴스 스테이션',
     subtitle: '좋아하는 팟캐스트를 들어보세요',
     theme: '테마',
     language: '언어',
