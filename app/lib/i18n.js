@@ -1,6 +1,6 @@
 export const translations = {
   en: {
-    title: 'Podcast Player',
+    title: 'News Player',
     subtitle: 'Listen to your favorite podcasts',
     theme: 'Theme',
     language: 'Language',
@@ -16,7 +16,7 @@ export const translations = {
     pause: 'Pause',
   },
   ko: {
-    title: '팟캐스트 플레이어',
+    title: '뉴스 플레이어',
     subtitle: '좋아하는 팟캐스트를 들어보세요',
     theme: '테마',
     language: '언어',
