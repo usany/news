@@ -78,12 +78,18 @@ export default function WaveformProgress({ audio, current, currentDisplay, durat
     const draw = () => {
       animationIdRef.current = requestAnimationFrame(draw)
 
+      // Read brand colors from CSS variables (respects light/dark theme)
+      const styles = getComputedStyle(document.documentElement)
+      const bgColor = styles.getPropertyValue('--bg-secondary').trim() || '#f5f5f5'
+      const barColor = styles.getPropertyValue('--primary').trim() || '#A40F16'
+      const progressColor = styles.getPropertyValue('--accent').trim() || '#C0A353'
+
       // Clear canvas
-      ctx.fillStyle = '#f3f4f6'
+      ctx.fillStyle = bgColor
       ctx.fillRect(0, 0, width, height)
 
       // Draw waveform bars
-      ctx.fillStyle = '#667eea'
+      ctx.fillStyle = barColor
 
       for (let i = 0; i < barCount; i++) {
         const value = waveformData[i] || 0
@@ -101,7 +107,7 @@ export default function WaveformProgress({ audio, current, currentDisplay, durat
       // Draw progress indicator
       if (durationSeconds > 0) {
         const progressX = (current / durationSeconds) * width
-        ctx.fillStyle = '#764ba2'
+        ctx.fillStyle = progressColor
         ctx.fillRect(Math.max(progressX - 2, 0), 0, 4, height)
       }
     }

@@ -1,5 +1,5 @@
 .container {
-  background: white;
+  background: var(--bg-primary);
   border-radius: 12px;
   padding: 25px;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
@@ -8,7 +8,7 @@
 .container h2 {
   font-size: 1.5em;
   margin-bottom: 20px;
-  color: #333;
+  color: var(--text-primary);
 }
 
 .list {
@@ -19,7 +19,7 @@
 
 .item {
   padding: 15px;
-  border: 1px solid #eee;
+  border: 1px solid var(--border);
   border-radius: 8px;
   transition: all 0.3s ease;
   display: flex;
@@ -28,13 +28,13 @@
 }
 
 .item:hover {
-  background: #f8f9ff;
-  border-color: #667eea;
+  background: var(--bg-tertiary);
+  border-color: var(--secondary);
 }
 
 .item.active {
-  background: #e8eaf6;
-  border-color: #667eea;
+  background: var(--bg-tertiary);
+  border-color: var(--primary);
 }
 
 .episodeContent {
@@ -42,23 +42,24 @@
 }
 
 .detailsBlock {
-  border-top: 1px solid #e0e0e0;
+  border-top: 1px solid var(--border);
   padding-top: 12px;
 }
 
 .title {
   font-weight: 600;
-  color: #333;
+  color: var(--text-primary);
   margin-bottom: 5px;
 }
 
 .podcast {
   font-size: 0.9em;
-  color: #666;
+  color: var(--text-secondary);
   margin-bottom: 8px;
 }
 
 .duration {
   font-size: 0.85em;
-  color: #999;
+  color: var(--text-secondary);
+  opacity: 0.8;
 }
