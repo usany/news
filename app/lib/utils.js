@@ -1,11 +1,20 @@
 export const EPISODES = [
-  // { title: "Newsfront", url: "/store/Newsfront.mp3" },
-  { title: "KHU Weekly News Broadcast - Week 5", url: "/store/week5_broadcast_audio.wav" },
-  { title: "KHU Full News - 2026 Week 3 (July)", url: "/store/2026_07_w3_full_news.wav" },
-  { title: "KHU News - 2026 Week 3 (July)", url: "/store/2026_07_w3.wav" },
-  { title: "KHU Full News - 2026 Week 1 (August)", url: "/store/2026_08_w1_full_news.wav" },
-  { title: "KHU Full News - 2026 Week 2 (August)", url: "/store/2026_08_w2_full_news.wav" },
+  // { url: "/store/Newsfront.mp3" },
+  { url: "/store/week5_broadcast_audio.wav" },
+  { url: "/store/2026_07_w3_full_news.wav" },
+  { url: "/store/2026_07_w3.wav" },
+  { url: "/store/2026_08_w1_full_news.wav" },
+  { url: "/store/2026_08_w2_full_news.wav" },
 ]
+
+export function titleFromUrl(url) {
+  const name = url.split('/').pop().replace(/\.[^.]+$/, '')
+  return name
+    .split('_')
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ')
+}
+
 export async function getAudioDuration(url) {
   return new Promise((resolve) => {
     const audio = new Audio()
