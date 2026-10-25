@@ -1,10 +1,10 @@
 export const EPISODES = [
-  // { title: "Newsfront", podcast: "News Podcast", url: "/store/Newsfront.mp3" },
-  { title: "KHU Weekly News Broadcast - Week 5", podcast: "KHU News", url: "/store/week5_broadcast_audio.wav" },
-  { title: "KHU Full News - 2026 Week 3 (July)", podcast: "KHU News", url: "/store/2026_07_w3_full_news.wav" },
-  { title: "KHU News - 2026 Week 3 (July)", podcast: "KHU News", url: "/store/2026_07_w3.wav" },
-  { title: "KHU Full News - 2026 Week 1 (August)", podcast: "KHU News", url: "/store/2026_08_w1_full_news.wav" },
-  { title: "KHU Full News - 2026 Week 2 (August)", podcast: "KHU News", url: "/store/2026_08_w2_full_news.wav" },
+  // { title: "Newsfront", url: "/store/Newsfront.mp3" },
+  { title: "KHU Weekly News Broadcast - Week 5", url: "/store/week5_broadcast_audio.wav" },
+  { title: "KHU Full News - 2026 Week 3 (July)", url: "/store/2026_07_w3_full_news.wav" },
+  { title: "KHU News - 2026 Week 3 (July)", url: "/store/2026_07_w3.wav" },
+  { title: "KHU Full News - 2026 Week 1 (August)", url: "/store/2026_08_w1_full_news.wav" },
+  { title: "KHU Full News - 2026 Week 2 (August)", url: "/store/2026_08_w2_full_news.wav" },
 ]
 export async function getAudioDuration(url) {
   return new Promise((resolve) => {

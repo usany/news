@@ -104,7 +104,6 @@ export default function Player() {
         <div className={styles.player}>
           <div className={styles.nowPlaying}>
             <h3>{episode.title}</h3>
-            <p>{episode.podcast}</p>
           </div>
 
           <WaveformProgress
