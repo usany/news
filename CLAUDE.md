@@ -27,24 +27,30 @@ without waiting to be asked. Follow these rules:
 
 **에이전트:** `.claude/agents/` — collector, ocr-director, scenarist, news-builder, qa-reviewer
 **스킬:** `.claude/skills/` — news-orchestrator (오케스트레이터), scraping, ocr-processing, scenario-direction, news-building, reviewing
-**산출물 위치:** `news/` (최종), `_workspace/` (중간)
+
+**모노레포 구조 (pnpm workspaces):**
+- `apps/podcast-player/` — Next.js 라디오 플레이어 UI (`dev`/`build`/`start`)
+- `apps/newstask/` — 헤드리스 워커 (cron 파이프라인, `.env`에 GEMINI_API_KEY/S3_ENDPOINT)
+- `packages/pipeline/` — 공유 뉴스 파이프라인 (scripts/, pipeline-orchestration.json, pyproject.toml)
+  - 산출물: `packages/pipeline/_workspace/` (중간), `packages/pipeline/store/` (오디오)
+- 루트 `package.json` — 각 앱/패키지로 위임하는 orchestration 스크립트 (dev, build, pipeline, crawl, scenario, news:build)
 
 **Speech 생성:** Gemini-tts 생성 기능을 사용합니다.
 
 **collector + ocr-director 자동화 스크립트:**
 
-`scripts/khu_crawler.ts` (playwright, TypeScript) + `scripts/easyocr_helper.py` (easyocr, Python) 로 게시판 크롤링과 이미지 OCR 전 단계를 한 명령으로 자동 실행할 수 있다.
+`packages/pipeline/scripts/khu_crawler.ts` (playwright, TypeScript) + `packages/pipeline/scripts/easyocr_helper.py` (easyocr, Python) 로 게시판 크롤링과 이미지 OCR 전 단계를 한 명령으로 자동 실행할 수 있다.
 
-- 실행: `npx tsx scripts/khu_crawler.ts [--week=YYYY-MM-DD] [--no-ocr]`
-- 산출: `_workspace/01_scraping_report.md`, `_workspace/01_notice.md`, `_workspace/01_notice_images/`, `_workspace/02_ocr_results.md`
+- 실행: `pnpm --filter @radio-news/pipeline crawl -- --week=YYYY-MM-DD [--no-ocr]` (또는 `npx tsx packages/pipeline/scripts/khu_crawler.ts [--week=YYYY-MM-DD] [--no-ocr]`)
+- 산출: `packages/pipeline/_workspace/01_scraping_report.md`, `01_notice.md`, `01_notice_images/`, `02_ocr_results.md`
 - `--week` 미지정 시 오늘 날짜의 해당 주차(월~금) 수집. 5개 카테고리(일반/학사/장학/근로/행사)를 페이지 넘기며 대상 주 밖 공지가 나오면 중단. 이미지가 있는 공지는 easyocr(ko, en)로 텍스트 추출.
 
 **news-builder + scenarist 자동화 스크립트:**
 
-- `scripts/scenarist.mts` — 이번 주 공지(`_workspace/01_notice.md`)를 요약해 호스트/리포터 2인 라디오 뉴스 시나리오(`_workspace/03_news_scenario.md`) 작성 (opencode SDK).
-- `scripts/news_builder.mts` — `_workspace/03_news_scenario.md`의 호스트/리포터 대사를 Gemini **Multi-speaker TTS**(```gemini-3.1-flash-tts-preview```, GEMINI_API_KEY)로 합성해 단일 음성 파일(`_workspace/04_news_files/{week}_full_news.wav`)을 생성. 시나리오를 화자 라벨(호스트/리포터)이 붙은 대화로 보내고 `multiSpeakerVoiceConfig`로 화자별 다른 목소리를 매핑해 **단일 요청**으로 두 화자 음성이 담긴 오디오를 생성(무료쿼터 절약).
+- `packages/pipeline/scripts/scenarist.ts` — 이번 주 공지(`_workspace/01_notice.md`)를 요약해 호스트/리포터 2인 라디오 뉴스 시나리오(`_workspace/03_news_scenario.md`) 작성 (opencode SDK).
+- `packages/pipeline/scripts/news_builder.ts` — `_workspace/03_news_scenario.md`의 호스트/리포터 대사를 Gemini **Multi-speaker TTS**(```gemini-3.1-flash-tts-preview```, GEMINI_API_KEY)로 합성해 단일 음성 파일(`_workspace/04_news_files/{week}_full_news.wav`)을 생성. 시나리오를 화자 라벨(호스트/리포터)이 붙은 대화로 보내고 `multiSpeakerVoiceConfig`로 화자별 다른 목소리를 매핑해 **단일 요청**으로 두 화자 음성이 담긴 오디오를 생성(무료쿼터 절약).
 
-  실행: `npx tsx scripts/news_builder.mts [--input=...] [--output=...] [--model=...] [--host-voice=...] [--reporter-voice=...]`
+  실행: `npx tsx packages/pipeline/scripts/news_builder.ts [--input=...] [--output=...] [--model=...] [--host-voice=...] [--reporter-voice=...]`
 
 **변경 이력:**
 

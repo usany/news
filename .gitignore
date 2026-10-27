@@ -1,8 +1,29 @@
+# Dependencies
 node_modules/
+
+# Build output
 .next/
 dist/
 build/
+*.tsbuildinfo
+
+# Env / secrets
+.env
 .env.local
 .env.*.local
+
+# Logs
 *.log
-.env
+
+# Python
+__pycache__/
+.venv/
+
+# Pipeline runtime artifacts (kept out of VCS)
+packages/pipeline/_workspace/
+packages/pipeline/store/
+apps/newstask/_workspace/
+apps/newstask/store/
+
+# OS
+.DS_Store

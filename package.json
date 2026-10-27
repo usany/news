@@ -1,29 +1,22 @@
 {
-  "name": "podcast-player",
+  "name": "radio-news-monorepo",
   "version": "1.0.0",
+  "private": true,
+  "description": "Radio News monorepo: podcast-player UI + newstask worker, sharing the news pipeline package",
+  "packageManager": "pnpm@10.33.2",
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "tsx scripts/run_pipeline.ts",
-    "news:crawl": "tsx scripts/khu_crawler.ts",
-    "news:scenario": "tsx scripts/scenarist.mts",
-    "news:build": "tsx scripts/news_builder.mts",
-    "news:install": "tsx scripts/install_cron.ts"
+    "dev": "pnpm --filter podcast-player dev",
+    "build": "pnpm --filter podcast-player build",
+    "start": "pnpm --filter podcast-player start",
+    "pipeline": "pnpm --filter newstask pipeline",
+    "build:scripts": "pnpm --filter @radio-news/pipeline build:scripts",
+    "crawl": "pnpm --filter @radio-news/pipeline crawl",
+    "scenario": "pnpm --filter @radio-news/pipeline scenario",
+    "news:build": "pnpm --filter @radio-news/pipeline build"
   },
-  "dependencies": {
-    "@google/generative-ai": "^0.24.1",
-    "next": "^14.0.0",
-    "node-cron": "^4.6.0",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0"
-  },
-  "devDependencies": {
-    "@opencode-ai/sdk": "^1.18.16",
-    "@types/node": "^20.0.0",
-    "@types/react": "^18.2.0",
-    "playwright": "^1.62.1",
-    "tsx": "^4.23.12",
-    "typescript": "^5.3.0"
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild"
+    ]
   }
 }

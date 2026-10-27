@@ -1,36 +1,52 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Radio News — Monorepo
+
+라디오 뉴스 자동 제작 하네스. pnpm workspaces 기반 모노레포.
+
+## 구조
+
+```
+news/
+├── apps/
+│   ├── podcast-player/   # Next.js 라디오 플레이어 UI
+│   └── newstask/         # 헤드리스 워커 (cron 파이프라인, AWS S3 + OpenAI)
+├── packages/
+│   └── pipeline/         # 공유 뉴스 파이프라인 (crawl → scenario → TTS)
+├── .github/workflows/    # cron-pipeline.yml (GitHub Actions 스케줄러)
+├── pnpm-workspace.yaml   # apps/*, packages/*
+└── package.json          # 루트 orchestration 스크립트
+```
 
 ## Getting Started
 
-First, run the development server:
-
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+pnpm install          # 워크스페이스 의존성 설치
+pnpm dev              # podcast-player 개발 서버 (Next.js)
+pnpm build            # podcast-player 프로덕션 빌드
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 뉴스 파이프라인
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+# 파이프라인 실행 (crawl → scenario → TTS), 각 앱/패키지 cwd에서 .env 사용
+pnpm pipeline                          # 루트에서 (newstask의 pipeline 실행)
+pnpm --filter newstask pipeline        # 명시적
+pnpm --filter @radio-news/pipeline pipeline
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+# 개별 단계
+pnpm crawl                             # 게시판 크롤링 + OCR
+pnpm scenario                          # 뉴스 시나리오 작성
+pnpm news:build                        # TTS 음성 생성
+pnpm build:scripts                     # 파이프라인 TS 컴파일
+```
 
-## Learn More
+파이프라인 산출물은 `packages/pipeline/_workspace/` (중간) 와 `packages/pipeline/store/` (오디오) 에 생성된다.
 
-To learn more about Next.js, take a look at the following resources:
+## 환경 변수
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+각 앱/패키지는 자체 `.env`를 가진다 (git에 추적되지 않음):
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- `apps/podcast-player/.env` — `S3_ENDPOINT` (오디오 프록시)
+- `apps/newstask/.env` — `GEMINI_API_KEY`, `S3_ENDPOINT`
+- `packages/pipeline/.env` — `GEMINI_API_KEY` (로컬 스크립트 실행 시)
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+GitHub Actions는 시크릿(`GEMINI_API_KEY`, `S3_ENDPOINT`)을 통해 주입한다.
