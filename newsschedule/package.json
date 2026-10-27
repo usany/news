@@ -1,0 +1,29 @@
+{
+  "name": "newstask",
+  "version": "1.0.0",
+  "description": "",
+  "scripts": {
+    "build:scripts": "tsc -p tsconfig.scripts.json",
+    "pipeline": "node --env-file=.env scripts/run_pipeline.ts"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "packageManager": "pnpm@10.33.2",
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.1147.0",
+    "openai": "^4.78.0",
+    "playwright": "^1.63.0"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.4",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2"
+  },
+  "type": "module",
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild"
+    ]
+  }
+}
