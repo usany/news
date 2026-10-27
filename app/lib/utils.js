@@ -1,4 +1,7 @@
 export const EPISODES = [
+  { url: "/api/storage/2026_10_w5_full_news.wav" },
+  { url: "/api/storage/2026_10_w4_full_news.wav" },
+  { url: "/api/storage/full_news_full_news.wav" },
   { url: "/api/storage/week5_broadcast_audio.wav" },
   { url: "/api/storage/2026_07_w3_full_news.wav" },
   { url: "/api/storage/2026_07_w3.wav" },
