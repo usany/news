@@ -1,10 +1,10 @@
 export const EPISODES = [
-  // { url: "/store/Newsfront.mp3" },
-  { url: "/store/week5_broadcast_audio.wav" },
-  { url: "/store/2026_07_w3_full_news.wav" },
-  { url: "/store/2026_07_w3.wav" },
-  { url: "/store/2026_08_w1_full_news.wav" },
-  { url: "/store/2026_08_w2_full_news.wav" },
+  { url: "/api/storage/week5_broadcast_audio.wav" },
+  { url: "/api/storage/2026_07_w3_full_news.wav" },
+  { url: "/api/storage/2026_07_w3.wav" },
+  { url: "/api/storage/2026_08_w1_full_news.wav" },
+  { url: "/api/storage/2026_08_w2_full_news.wav" },
+  { url: "/api/storage/Newsfront.mp3" },
 ]
 
 export function titleFromUrl(url) {
