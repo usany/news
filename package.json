@@ -8,7 +8,7 @@
     "dev": "pnpm --filter podcast-player dev",
     "build": "pnpm --filter podcast-player build",
     "start": "pnpm --filter podcast-player start",
-    "pipeline": "pnpm --filter newstask pipeline",
+    "pipeline": "pnpm --filter @radio-news/pipeline pipeline",
     "build:scripts": "pnpm --filter @radio-news/pipeline build:scripts",
     "crawl": "pnpm --filter @radio-news/pipeline crawl",
     "scenario": "pnpm --filter @radio-news/pipeline scenario",

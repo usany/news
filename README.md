@@ -7,8 +7,7 @@
 ```
 news/
 ├── apps/
-│   ├── podcast-player/   # Next.js 라디오 플레이어 UI
-│   └── newstask/         # 헤드리스 워커 (cron 파이프라인, AWS S3 + OpenAI)
+│   └── podcast-player/   # Next.js 라디오 플레이어 UI
 ├── packages/
 │   └── pipeline/         # 공유 뉴스 파이프라인 (crawl → scenario → TTS)
 ├── .github/workflows/    # cron-pipeline.yml (GitHub Actions 스케줄러)
@@ -27,9 +26,8 @@ pnpm build            # podcast-player 프로덕션 빌드
 ## 뉴스 파이프라인
 
 ```bash
-# 파이프라인 실행 (crawl → scenario → TTS), 각 앱/패키지 cwd에서 .env 사용
-pnpm pipeline                          # 루트에서 (newstask의 pipeline 실행)
-pnpm --filter newstask pipeline        # 명시적
+# 파이프라인 실행 (crawl → scenario → TTS)
+pnpm pipeline                          # 루트에서
 pnpm --filter @radio-news/pipeline pipeline
 
 # 개별 단계
@@ -46,7 +44,6 @@ pnpm build:scripts                     # 파이프라인 TS 컴파일
 각 앱/패키지는 자체 `.env`를 가진다 (git에 추적되지 않음):
 
 - `apps/podcast-player/.env` — `S3_ENDPOINT` (오디오 프록시)
-- `apps/newstask/.env` — `GEMINI_API_KEY`, `S3_ENDPOINT`
-- `packages/pipeline/.env` — `GEMINI_API_KEY` (로컬 스크립트 실행 시)
+- `packages/pipeline/.env` — `GEMINI_API_KEY`, `S3_ENDPOINT` (로컬 스크립트 실행 시)
 
 GitHub Actions는 시크릿(`GEMINI_API_KEY`, `S3_ENDPOINT`)을 통해 주입한다.

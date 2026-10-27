@@ -30,8 +30,7 @@ without waiting to be asked. Follow these rules:
 
 **모노레포 구조 (pnpm workspaces):**
 - `apps/podcast-player/` — Next.js 라디오 플레이어 UI (`dev`/`build`/`start`)
-- `apps/newstask/` — 헤드리스 워커 (cron 파이프라인, `.env`에 GEMINI_API_KEY/S3_ENDPOINT)
-- `packages/pipeline/` — 공유 뉴스 파이프라인 (scripts/, pipeline-orchestration.json, pyproject.toml)
+- `packages/pipeline/` — 공유 뉴스 파이프라인 (scripts/, pipeline-orchestration.json, pyproject.toml, .env)
   - 산출물: `packages/pipeline/_workspace/` (중간), `packages/pipeline/store/` (오디오)
 - 루트 `package.json` — 각 앱/패키지로 위임하는 orchestration 스크립트 (dev, build, pipeline, crawl, scenario, news:build)
 

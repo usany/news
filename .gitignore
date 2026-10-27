@@ -22,8 +22,6 @@ __pycache__/
 # Pipeline runtime artifacts (kept out of VCS)
 packages/pipeline/_workspace/
 packages/pipeline/store/
-apps/newstask/_workspace/
-apps/newstask/store/
 
 # OS
 .DS_Store
