@@ -16,7 +16,10 @@ export async function GET(request, { params }) {
     ? S3_ENDPOINT + key
     : S3_ENDPOINT + '/' + key
 
-  const res = await fetch(url)
+  const res = await fetch(url, {
+    cache: 'no-store',
+  })
+
   if (!res.ok) {
     return NextResponse.json(
       { error: `Object not found (${res.status})` },
@@ -24,16 +27,27 @@ export async function GET(request, { params }) {
     )
   }
 
-  const arrayBuffer = await res.arrayBuffer()
-  const contentType =
-    res.headers.get('content-type') ?? 'application/octet-stream'
+  const contentType = res.headers.get('content-type') ?? 'application/octet-stream'
+  const contentLength = res.headers.get('content-length')
+  const etag = res.headers.get('etag')
 
-  return new NextResponse(arrayBuffer, {
-    status: 200,
-    headers: {
-      'Content-Type': contentType,
-      'Content-Length': String(arrayBuffer.byteLength),
-      'Cache-Control': 'public, max-age=3600',
-    },
-  })
+  const headers = {
+    'Content-Type': contentType,
+    // Cache aggressively: audio files are immutable once uploaded.
+    // Browser caches up to 7 days; ETag enables cheap 304 revalidation after that.
+    'Cache-Control': 'public, max-age=604800, immutable',
+    ...(contentLength ? { 'Content-Length': contentLength } : {}),
+    ...(etag ? { ETag: etag } : {}),
+    'Access-Control-Allow-Origin': '*',
+  }
+
+  // Stream the bytes straight from Oracle instead of buffering the whole
+  // object in memory — the client starts receiving audio almost immediately.
+  if (res.body) {
+    return new NextResponse(res.body, { status: 200, headers })
+  }
+
+  // Fallback for runtimes without streaming support.
+  const arrayBuffer = await res.arrayBuffer()
+  return new NextResponse(arrayBuffer, { status: 200, headers })
 }
