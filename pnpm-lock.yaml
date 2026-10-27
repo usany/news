@@ -6,7 +6,45 @@ settings:
 
 importers:
 
-  .: {}
+  .:
+    dependencies:
+      '@google/generative-ai':
+        specifier: ^0.24.1
+        version: 0.24.1
+      next:
+        specifier: ^14.0.0
+        version: 14.2.35(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      node-cron:
+        specifier: ^4.6.0
+        version: 4.6.0
+      openai:
+        specifier: ^4.78.0
+        version: 4.104.0
+      playwright:
+        specifier: ^1.63.0
+        version: 1.64.1
+      react:
+        specifier: ^18.2.0
+        version: 18.3.1
+      react-dom:
+        specifier: ^18.2.0
+        version: 18.3.1(react@18.3.1)
+    devDependencies:
+      '@opencode-ai/sdk':
+        specifier: ^1.18.16
+        version: 1.18.25
+      '@types/node':
+        specifier: ^20.0.0
+        version: 20.19.43
+      '@types/react':
+        specifier: ^18.2.0
+        version: 18.3.31
+      tsx:
+        specifier: ^4.23.12
+        version: 4.23.15
+      typescript:
+        specifier: ^5.3.0
+        version: 5.9.3
 
   apps/podcast-player:
     dependencies:
@@ -864,7 +902,7 @@ snapshots:
 
   '@types/node-fetch@2.6.13':
     dependencies:
-      '@types/node': 26.6.5
+      '@types/node': 20.19.43
       form-data: 4.0.6
 
   '@types/node@18.19.130':

@@ -20,8 +20,8 @@ __pycache__/
 .venv/
 
 # Pipeline runtime artifacts (kept out of VCS)
-packages/pipeline/_workspace/
-packages/pipeline/store/
+/_workspace/
+/store/
 
 # OS
 .DS_Store

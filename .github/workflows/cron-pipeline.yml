@@ -27,9 +27,6 @@ jobs:
       GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
       S3_ENDPOINT: ${{ secrets.S3_ENDPOINT }}
       PYTHON: ${{ github.workspace }}/.venv/bin/python
-    defaults:
-      run:
-        working-directory: packages/pipeline
     steps:
       - uses: actions/checkout@v4
 
@@ -70,7 +67,7 @@ jobs:
         with:
           name: pipeline-output-${{ github.run_id }}
           path: |
-            packages/pipeline/_workspace/
-            packages/pipeline/store/
+            _workspace/
+            store/
           if-no-files-found: ignore
           retention-days: 14
