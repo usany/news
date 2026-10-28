@@ -1,0 +1,16 @@
+{
+  "storage": {
+    "endpoint": "https://objectstorage.ap-chuncheon-1.oraclecloud.com/p/MGoMTri-Fp0xs4HYW6gTTe1rAJrL2x4E0jw-wGtpMex5tYXvfzVlGKudz44VNP_A/n/ax0ym4amgnfk/b/bucket-20261002-1841/o/"
+  },
+  "episodes": [
+    { "url": "/api/storage/2026_10_w5_full_news.wav" },
+    { "url": "/api/storage/2026_10_w4_full_news.wav" },
+    { "url": "/api/storage/full_news_full_news.wav" },
+    { "url": "/api/storage/week5_broadcast_audio.wav" },
+    { "url": "/api/storage/2026_07_w3_full_news.wav" },
+    { "url": "/api/storage/2026_07_w3.wav" },
+    { "url": "/api/storage/2026_08_w1_full_news.wav" },
+    { "url": "/api/storage/2026_08_w2_full_news.wav" },
+    { "url": "/api/storage/Newsfront.mp3" }
+  ]
+}

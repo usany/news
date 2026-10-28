@@ -1,14 +1,6 @@
-export const EPISODES = [
-  { url: "/api/storage/2026_10_w5_full_news.wav" },
-  { url: "/api/storage/2026_10_w4_full_news.wav" },
-  { url: "/api/storage/full_news_full_news.wav" },
-  { url: "/api/storage/week5_broadcast_audio.wav" },
-  { url: "/api/storage/2026_07_w3_full_news.wav" },
-  { url: "/api/storage/2026_07_w3.wav" },
-  { url: "/api/storage/2026_08_w1_full_news.wav" },
-  { url: "/api/storage/2026_08_w2_full_news.wav" },
-  { url: "/api/storage/Newsfront.mp3" },
-]
+import newsConfig from '../../config/news.json' with { type: 'json' }
+
+export const EPISODES = newsConfig.episodes
 
 export function titleFromUrl(url) {
   const name = url.split('/').pop().replace(/\.[^.]+$/, '')

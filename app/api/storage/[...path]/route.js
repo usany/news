@@ -1,8 +1,7 @@
 import { NextResponse } from 'next/server'
+import config from '../../../../config/news.json' with { type: 'json' }
 
-const S3_ENDPOINT =
-  process.env.S3_ENDPOINT ??
-  'https://objectstorage.ap-chuncheon-1.oraclecloud.com/p/MGoMTri-Fp0xs4HYW6gTTe1rAJrL2x4E0jw-wGtpMex5tYXvfzVlGKudz44VNP_A/n/ax0ym4amgnfk/b/bucket-20261002-1841/o/'
+const S3_ENDPOINT = process.env.S3_ENDPOINT ?? config.storage.endpoint
 
 export async function GET(request, { params }) {
   const { path = [] } = params ?? {}
