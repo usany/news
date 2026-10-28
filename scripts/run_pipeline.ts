@@ -58,7 +58,7 @@ interface PipelineConfig {
 }
 
 function loadOrchestration(): PipelineConfig {
-  const orchestPath = path.join(ROOT, "pipeline-orchestration.json");
+  const orchestPath = path.join(ROOT, "scripts", "pipeline-orchestration.json");
   const raw = fs.readFileSync(orchestPath, "utf8");
   return JSON.parse(raw) as PipelineConfig;
 }
