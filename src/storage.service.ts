@@ -60,7 +60,9 @@ export class StorageService {
     url.searchParams.set('max-keys', '1000');
 
     const res = await fetch(url, {
-      headers: { Accept: 'application/xml, application/json' },
+      // Oracle Object Storage PAR endpoints only support JSON responses;
+      // requesting XML returns 406 Not Acceptable.
+      headers: { Accept: 'application/json' },
     });
 
     if (!res.ok) {
@@ -80,7 +82,7 @@ export class StorageService {
  * Falls back to parsing a JSON error/list body where possible.
  */
 function parseListResponse(xml: string, baseUrl: string): StorageItem[] {
-  // Prefer JSON if the endpoint returned it (some Oracle endpoints do).
+  // Prefer JSON if the endpoint returned it (Oracle PAR endpoints do).
   const trimmed = xml.trim();
   if (trimmed.startsWith('{')) {
     try {
@@ -88,9 +90,9 @@ function parseListResponse(xml: string, baseUrl: string): StorageItem[] {
       if (Array.isArray(json.objects)) {
         return json.objects.map((o: any) => ({
           name: String(o.name ?? ''),
-          url: baseUrl + encodeURIComponent(String(o.name ?? '')),
+          url: buildItemUrl(baseUrl, String(o.name ?? '')),
           size: Number(o.size ?? 0),
-          lastModified: String(o.lastModified ?? ''),
+          lastModified: String(o.lastModified ?? o.timeModified ?? ''),
         }));
       }
     } catch {
@@ -107,12 +109,25 @@ function parseListResponse(xml: string, baseUrl: string): StorageItem[] {
     if (!name) continue;
     items.push({
       name,
-      url: baseUrl + encodeURIComponent(name),
+      url: buildItemUrl(baseUrl, name),
       size: Number(extractTag(block, 'Size') ?? 0),
       lastModified: extractTag(block, 'LastModified') ?? '',
     });
   }
   return items;
+}
+
+/**
+ * Build a directly-fetchable object URL from the base URL and object key.
+ * Only the segments of the key are percent-encoded; the `/` separators are
+ * preserved so nested keys (e.g. `2026_08_w2/full.wav`) resolve correctly.
+ */
+function buildItemUrl(baseUrl: string, name: string): string {
+  const encoded = name
+    .split('/')
+    .map((segment) => encodeURIComponent(segment))
+    .join('/');
+  return baseUrl + encoded;
 }
 
 function extractTag(block: string, tag: string): string | undefined {
