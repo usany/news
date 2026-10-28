@@ -10,10 +10,6 @@ on:
         description: "Week to build (YYYY-MM-DD), blank = current"
         required: false
         default: ""
-      no_ocr:
-        description: "Skip easyocr"
-        type: boolean
-        default: false
 
 concurrency:
   group: news-pipeline
@@ -48,14 +44,12 @@ jobs:
         run: pnpm exec playwright install --with-deps chromium
 
       - name: Install easyocr
-        if: ${{ !inputs.no_ocr }}
         run: uv sync --locked
 
       - name: Run pipeline
         run: |
           args=()
           if [ -n "${{ inputs.week }}" ]; then args+=("--week=${{ inputs.week }}"); fi
-          if [ "${{ inputs.no_ocr }}" = "true" ]; then args+=(--no-ocr); fi
           node --env-file=.env scripts/run_pipeline.ts "${args[@]}"
 
       - name: Upload outputs
