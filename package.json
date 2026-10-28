@@ -3,16 +3,17 @@
   "version": "1.0.0",
   "description": "Radio News: Next.js player + news auto-production pipeline",
   "private": true,
+  "type": "module",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "pipeline": "tsx --env-file=.env scripts/run_pipeline.ts",
+    "pipeline": "node --env-file=.env scripts/run_pipeline.ts",
     "build:scripts": "tsc -p tsconfig.scripts.json",
-    "news:crawl": "tsx scripts/khu_crawler.ts",
-    "news:scenario": "tsx scripts/scenarist.ts",
-    "news:build": "tsx scripts/news_builder.ts"
+    "news:crawl": "node scripts/khu_crawler.ts",
+    "news:scenario": "node scripts/scenarist.ts",
+    "news:build": "node scripts/news_builder.ts"
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",

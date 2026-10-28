@@ -14,10 +14,10 @@
  * Requires GOOGLE_API_KEY environment variable or configure your credentials.
  *
  * Run (from repo root):
- *   npx tsx scripts/scenarist.ts
- *   npx tsx scripts/scenarist.ts --input=_workspace/01_notice.md
- *   npx tsx scripts/scenarist.ts --output=_workspace/03_news_scenario.md
- *   npx tsx scripts/scenarist.ts --model=gemini-2.0-flash
+ *   node scripts/scenarist.ts
+ *   node scripts/scenarist.ts --input=_workspace/01_notice.md
+ *   node scripts/scenarist.ts --output=_workspace/03_news_scenario.md
+ *   node scripts/scenarist.ts --model=gemini-2.0-flash
  */
 import OpenAI from "openai";
 import * as fsp from "node:fs/promises";

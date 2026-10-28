@@ -1,4 +1,4 @@
-#!/usr/bin/env -S npx tsx
+#!/usr/bin/env node
 /**
  * scripts/run_pipeline.ts — runs the news pipeline once, then exits.
  *
@@ -7,9 +7,9 @@
  * Actions (.github/workflows/cron-pipeline.yml), not by this script.
  *
  * Run:
- *   npx tsx scripts/run_pipeline.ts
- *   npx tsx scripts/run_pipeline.ts --week=2026-08-10
- *   npx tsx scripts/run_pipeline.ts --no-ocr
+ *   node scripts/run_pipeline.ts
+ *   node scripts/run_pipeline.ts --week=2026-08-10
+ *   node scripts/run_pipeline.ts --no-ocr
  */
 import { spawnSync } from "node:child_process";
 import * as path from "node:path";

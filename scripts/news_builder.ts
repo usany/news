@@ -1,5 +1,5 @@
 /**
- * news_builder.mts — replaces the `news-builder` agent using the Gemini TTS API.
+ * news_builder.ts — replaces the `news-builder` agent using the Gemini TTS API.
  *
  * Mirrors `.claude/agents/news-builder.md`. Uses Gemini's native MULTI-SPEAKER
  * TTS so a SINGLE request produces one audio file with TWO different voices
@@ -23,9 +23,9 @@
  *   Puck, Charon, Kore, Fenrir, Aoede, Zephyr, Calliope, Leda, Orus
  *
  * Run (from repo root):
- *   npx tsx scripts/news_builder.mts
- *   npx tsx scripts/news_builder.mts --host-voice=Kore --reporter-voice=Puck
- *   npx tsx scripts/news_builder.mts --input=... --output=...
+ *   node scripts/news_builder.ts
+ *   node scripts/news_builder.ts --host-voice=Kore --reporter-voice=Puck
+ *   node scripts/news_builder.ts --input=... --output=...
  */
 import * as fs from "node:fs";
 import * as fsp from "node:fs/promises";

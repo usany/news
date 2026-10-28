@@ -12,9 +12,9 @@
  *   4. Writes `_workspace/01_notice.md` and `_workspace/01_scraping_report.md`.
  *
  * Run (from repo root):
- *   npx tsx scripts/khu_crawler.ts                 # this calendar week (Mon–Fri)
- *   npx tsx scripts/khu_crawler.ts --week=2026-07-20
- *   npx tsx scripts/khu_crawler.ts --no-ocr         # skip easyocr (faster)
+ *   node scripts/khu_crawler.ts                 # this calendar week (Mon–Fri)
+ *   node scripts/khu_crawler.ts --week=2026-07-20
+ *   node scripts/khu_crawler.ts --no-ocr         # skip easyocr (faster)
  */
 import { chromium, type Browser, type BrowserContext, type Page } from "playwright";
 import { execFile } from "node:child_process";
