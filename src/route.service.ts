@@ -3,7 +3,7 @@ import { StorageService } from './storage.service.js';
 
 /** An episode entry exposed to the SPA via /route. */
 export interface Episode {
-  /** SPA-facing URL, served by GET /api/storage/:name. */
+  /** SPA-facing URL, served by GET /route/:name. */
   url: string;
   /** Audio duration in seconds (float), or null when unknown. */
   duration: number | null;
@@ -25,7 +25,7 @@ export class RouteService {
 
   /**
    * Lists the objects in the configured object storage bucket so a React SPA
-   * can render and play them. Each episode carries a SPA-facing `/api/storage`
+   * can render and play them. Each episode carries a SPA-facing `/route`
    * URL plus its audio duration (seconds) and byte size.
    */
   async getRoute(): Promise<RouteResponse> {
@@ -46,7 +46,7 @@ export class RouteService {
             () => null,
           );
           return {
-            url: `/api/storage/${i.name}`,
+            url: `/route/${i.name}`,
             duration,
             size: i.size,
           };
