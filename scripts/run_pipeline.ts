@@ -2,9 +2,9 @@
 /**
  * scripts/run_pipeline.ts — runs the news pipeline once, then exits.
  *
- * Executes each stage from pipeline-orchestration.json in order, stopping at
- * the first failure and validating each stage's outputs. Scheduling is done by
- * GitHub Actions (.github/workflows/cron-pipeline.yml), not by this script.
+ * Executes each stage (defined inline below) in order, stopping at the first
+ * failure and validating each stage's outputs. Scheduling is done by GitHub
+ * Actions (.github/workflows/cron-pipeline.yml), not by this script.
  *
  * Run:
  *   npx tsx scripts/run_pipeline.ts
@@ -13,7 +13,6 @@
  */
 import { spawnSync } from "node:child_process";
 import * as path from "node:path";
-import * as fs from "node:fs";
 import * as fsp from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 
@@ -35,7 +34,7 @@ function parseArgs(argv: string[]): string[] {
   return pipelineArgs;
 }
 
-// --- Load pipeline orchestration ---
+// --- Pipeline orchestration (inline config, previously pipeline-orchestration.json) ---
 interface PipelineStage {
   id: number;
   name: string;
@@ -57,11 +56,58 @@ interface PipelineConfig {
   }>;
 }
 
-function loadOrchestration(): PipelineConfig {
-  const orchestPath = path.join(ROOT, "scripts", "pipeline-orchestration.json");
-  const raw = fs.readFileSync(orchestPath, "utf8");
-  return JSON.parse(raw) as PipelineConfig;
-}
+const PIPELINE_CONFIG: PipelineConfig = {
+  name: "news-pipeline",
+  stages: [
+    {
+      id: 1,
+      name: "crawling KHU notice board (collector + ocr-director)",
+      script: "scripts/khu_crawler.ts",
+      args: [],
+      outputs: [
+        { desc: "notice markdown", path: "_workspace/01_notice.md" },
+        { desc: "scraping report", path: "_workspace/01_scraping_report.md" },
+      ],
+    },
+    {
+      id: 2,
+      name: "writing radio news scenario (scenarist)",
+      script: "scripts/scenarist.ts",
+      args: [],
+      outputs: [
+        { desc: "news scenario", path: "_workspace/03_news_scenario.md" },
+      ],
+    },
+    {
+      id: 3,
+      name: "synthesizing full news audio (news-builder)",
+      script: "scripts/news_builder.ts",
+      args: [],
+      outputs: [
+        { desc: "full news audio", path: "store/*_full_news.wav" },
+      ],
+    },
+  ],
+  env: {
+    required: ["GEMINI_API_KEY"],
+    dotenv: ".env",
+  },
+  args: [
+    {
+      name: "week",
+      flag: "--week",
+      type: "string",
+      stages: [1],
+    },
+    {
+      name: "ocr",
+      flag: "--no-ocr",
+      type: "boolean",
+      default: true,
+      stages: [1],
+    },
+  ],
+};
 
 // --- Fail helper ---
 function fail(msg: string): never {
@@ -133,7 +179,7 @@ function collectStageArgs(
 
 // --- Execute pipeline from orchestration ---
 async function executePipeline(cliArgs: string[]): Promise<void> {
-  const config = loadOrchestration();
+  const config = PIPELINE_CONFIG;
 
   // Check env requirements
   for (const key of config.env.required) {

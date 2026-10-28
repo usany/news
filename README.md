@@ -12,11 +12,10 @@ news/
 │   ├── khu_crawler.ts      # 게시판 크롤링 + OCR
 │   ├── scenarist.ts        # 뉴스 시나리오 작성
 │   ├── news_builder.ts     # TTS 음성 생성
-│   ├── run_pipeline.ts     # 파이프라인 오케스트레이터
+│   ├── run_pipeline.ts     # 파이프라인 오케스트레이터 (단계 정의 포함)
 │   └── easyocr_helper.py   # 이미지 OCR (easyocr)
 ├── _workspace/             # 중간 산출물 (git 무시)
 ├── store/                  # 생성된 오디오 (git 무시)
-├── pipeline-orchestration.json
 ├── .github/workflows/      # cron-pipeline.yml (GitHub Actions 스케줄러)
 └── package.json            # 단일 패키지 (UI + 파이프라인 의존성)
 ```
