@@ -176,6 +176,11 @@ function collectStageArgs(
 async function executePipeline(cliArgs: string[]): Promise<void> {
   const config = PIPELINE_CONFIG;
 
+  // Check env requirements directly via process.env
+  if (!process.env.GEMINI_API_KEY) {
+    fail("GEMINI_API_KEY is not set (expected in .env or environment)");
+  }
+
   // Execute each stage
   for (const stage of config.stages) {
     const stageArgs = collectStageArgs(stage.id, config, cliArgs);
