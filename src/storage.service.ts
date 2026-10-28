@@ -57,6 +57,22 @@ export class StorageService {
   }
 
   /**
+   * Fetch a contiguous byte range of an object. Returns a Buffer containing
+   * the requested bytes (possibly fewer if the object is smaller).
+   */
+  async getItemRange(key: string, start: number, end: number): Promise<Buffer> {
+    const objectUrl = this.getItemUrl(key);
+    const res = await fetch(objectUrl, {
+      headers: { Range: `bytes=${start}-${end}` },
+    });
+    if (!res.ok && res.status !== 206) {
+      throw new Error(`Failed to fetch object range (HTTP ${res.status})`);
+    }
+    const buf = await res.arrayBuffer();
+    return Buffer.from(buf);
+  }
+
+  /**
    * Fetch the raw object listing from the bucket. Returns an array of items
    * parsed from the S3-compatible XML response.
    */

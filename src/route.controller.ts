@@ -10,11 +10,20 @@ import {
 import type { Response } from 'express';
 import { Readable as NodeReadable } from 'node:stream';
 import { StorageService } from './storage.service.js';
+import { audioDuration } from './audio-duration.js';
 
 /** An episode entry exposed to the SPA via /route. */
 interface Episode {
   /** SPA-facing URL, served by GET /api/storage/:name. */
   url: string;
+  /** Object key in storage (used as its name). */
+  name: string;
+  /** Audio duration in seconds (float), or null when it cannot be determined. */
+  lengthSeconds: number | null;
+  /** File size in bytes. */
+  size: number;
+  /** Last-modified timestamp from storage. */
+  lastModified: string;
 }
 
 /** Shape returned by GET /route. */
@@ -25,21 +34,11 @@ interface RouteResponse {
   episodes: Episode[];
 }
 
-/**
- * Default episode list. These are the known generated news files. The `url`
- * is the SPA-facing path, served by `GET /api/storage/:name`.
- */
-const EPISODES: Episode[] = [
-  { url: '/api/storage/2026_10_w5_full_news.wav' },
-  { url: '/api/storage/2026_10_w4_full_news.wav' },
-  { url: '/api/storage/full_news_full_news.wav' },
-  { url: '/api/storage/week5_broadcast_audio.wav' },
-  { url: '/api/storage/2026_07_w3_full_news.wav' },
-  { url: '/api/storage/2026_07_w3.wav' },
-  { url: '/api/storage/2026_08_w1_full_news.wav' },
-  { url: '/api/storage/2026_08_w2_full_news.wav' },
-  { url: '/api/storage/Newsfront.mp3' },
-];
+/** Audio extensions we attempt to compute a duration for. */
+const AUDIO_EXTENSIONS = ['.wav', '.wave', '.mp3'];
+
+/** Only the first 64 KB is read from each object to determine duration. */
+const HEADER_BYTES = 64 * 1024;
 
 @Controller('route')
 export class RouteController {
@@ -48,11 +47,12 @@ export class RouteController {
   /**
    * GET /route
    *
-   * Returns the storage endpoint and the known episode list so a React SPA can
-   * render and consume them. Each episode's `url` points at /api/storage/:name.
+   * Lists the audio files present in the storage bucket and returns the
+   * storage endpoint plus an episode list (each with its audio length) so a
+   * React SPA can render and consume them.
    */
   @Get()
-  getRoute(): RouteResponse {
+  async getRoute(): Promise<RouteResponse> {
     const endpoint = this.storage.getStorageBaseUrl();
     if (!endpoint) {
       throw new HttpException(
@@ -61,10 +61,44 @@ export class RouteController {
       );
     }
 
+    const items = await this.storage.listItems();
+    const audioItems = items.filter((item) =>
+      AUDIO_EXTENSIONS.some((ext) => item.name.toLowerCase().endsWith(ext)),
+    );
+
+    const episodes: Episode[] = await Promise.all(
+      audioItems.map(async (item) => ({
+        url: `/api/storage/${item.name}`,
+        name: item.name,
+        lengthSeconds: await this.computeDuration(item.name, item.size),
+        size: item.size,
+        lastModified: item.lastModified,
+      })),
+    );
+
     return {
       storage: { endpoint },
-      episodes: EPISODES,
+      episodes,
     };
+  }
+
+  /**
+   * Read a small header slice of the object and compute its audio duration.
+   * Returns null when the duration cannot be determined.
+   */
+  private async computeDuration(
+    name: string,
+    size: number,
+  ): Promise<number | null> {
+    try {
+      const end = Math.min(size - 1, HEADER_BYTES - 1);
+      if (end < 0) return null;
+      const header = await this.storage.getItemRange(name, 0, end);
+      const seconds = audioDuration(name, header, size);
+      return Number.isFinite(seconds) ? (seconds as number) : null;
+    } catch {
+      return null;
+    }
   }
 }
 
