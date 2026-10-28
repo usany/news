@@ -74,7 +74,7 @@ function runStage(stage: PipelineStage, stageArgs: string[]): void {
   console.log(`[${new Date().toISOString()}] STAGE ${stage.id}/3: ${stage.name}`);
   const script = path.join(ROOT, stage.script);
   const args = [...stage.args, ...stageArgs];
-  const res = spawnSync("npx", ["tsx", script, ...args], {
+  const res = spawnSync("node", [script, ...args], {
     cwd: ROOT,
     stdio: "inherit",
   });
