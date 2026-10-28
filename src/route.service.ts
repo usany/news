@@ -2,7 +2,7 @@ import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { StorageService } from './storage.service.js';
 
 /** An episode entry exposed to the SPA via /route. */
-interface Episode {
+export interface Episode {
   /** SPA-facing URL, served by GET /api/storage/:name. */
   url: string;
   /** Audio duration in seconds (float), or null when unknown. */
@@ -12,7 +12,7 @@ interface Episode {
 }
 
 /** Shape returned by GET /route. */
-interface RouteResponse {
+export interface RouteResponse {
   storage: {
     endpoint: string;
   };
