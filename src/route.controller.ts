@@ -40,6 +40,29 @@ const AUDIO_EXTENSIONS = ['.wav', '.wave', '.mp3'];
 /** Only the first 64 KB is read from each object to determine duration. */
 const HEADER_BYTES = 64 * 1024;
 
+/**
+ * Known episode object keys. The Oracle Cloud Object Storage PAR used as
+ * `STORAGE_URL` authorizes object-level GET/PUT but does NOT support the
+ * S3-compatible ListObjects operation, so we cannot enumerate the bucket at
+ * runtime. These names are served instead (and can be overridden with the
+ * `EPISODES` env var as a comma-separated list).
+ */
+const DEFAULT_EPISODE_NAMES = [
+  '2026_10_w5_full_news.wav',
+  '2026_10_w4_full_news.wav',
+  'full_news_full_news.wav',
+];
+
+/** Resolve the episode names to list, from `EPISODES` env var or defaults. */
+function episodeNames(): string[] {
+  const raw = process.env.EPISODES ?? '';
+  if (!raw.trim()) return DEFAULT_EPISODE_NAMES;
+  return raw
+    .split(',')
+    .map((s) => s.trim())
+    .filter((s) => s.length > 0);
+}
+
 @Controller('route')
 export class RouteController {
   constructor(private readonly storage: StorageService) {}
@@ -61,18 +84,19 @@ export class RouteController {
       );
     }
 
-    const items = await this.storage.listItems();
-    const audioItems = items.filter((item) =>
-      AUDIO_EXTENSIONS.some((ext) => item.name.toLowerCase().endsWith(ext)),
+    // List known episode names rather than enumerating the bucket: the PAR
+    // endpoint does not support ListObjects.
+    const names = episodeNames().filter((name) =>
+      AUDIO_EXTENSIONS.some((ext) => name.toLowerCase().endsWith(ext)),
     );
 
     const episodes: Episode[] = await Promise.all(
-      audioItems.map(async (item) => ({
-        url: `/api/storage/${item.name}`,
-        name: item.name,
-        lengthSeconds: await this.computeDuration(item.name, item.size),
-        size: item.size,
-        lastModified: item.lastModified,
+      names.map(async (name) => ({
+        url: `/api/storage/${name}`,
+        name,
+        lengthSeconds: await this.computeDuration(name),
+        size: await this.computeSize(name),
+        lastModified: '',
       })),
     );
 
@@ -86,10 +110,8 @@ export class RouteController {
    * Read a small header slice of the object and compute its audio duration.
    * Returns null when the duration cannot be determined.
    */
-  private async computeDuration(
-    name: string,
-    size: number,
-  ): Promise<number | null> {
+  private async computeDuration(name: string): Promise<number | null> {
+    const size = await this.computeSize(name);
     try {
       const end = Math.min(size - 1, HEADER_BYTES - 1);
       if (end < 0) return null;
@@ -98,6 +120,18 @@ export class RouteController {
       return Number.isFinite(seconds) ? (seconds as number) : null;
     } catch {
       return null;
+    }
+  }
+
+  /** Resolve an object's size in bytes (0 when it cannot be determined). */
+  private async computeSize(name: string): Promise<number> {
+    try {
+      const objectUrl = this.storage.getItemUrl(name);
+      const res = await fetch(objectUrl, { method: 'HEAD' });
+      if (!res.ok) return 0;
+      return Number(res.headers.get('content-length') ?? 0) || 0;
+    } catch {
+      return 0;
     }
   }
 }
