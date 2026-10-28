@@ -9,7 +9,6 @@
  * Run:
  *   node scripts/run_pipeline.ts
  *   node scripts/run_pipeline.ts --week=2026-08-10
- *   node scripts/run_pipeline.ts --no-ocr
  */
 import { spawnSync } from "node:child_process";
 import * as path from "node:path";
@@ -24,7 +23,7 @@ function parseArgs(argv: string[]): string[] {
   const pipelineArgs: string[] = [];
 
   for (const a of argv) {
-    if (a.startsWith("--week=") || a === "--no-ocr") {
+    if (a.startsWith("--week=")) {
       pipelineArgs.push(a);
     } else {
       console.error(`unknown arg: ${a}`);
@@ -92,13 +91,6 @@ const PIPELINE_CONFIG: PipelineConfig = {
       name: "week",
       flag: "--week",
       type: "string",
-      stages: [1],
-    },
-    {
-      name: "ocr",
-      flag: "--no-ocr",
-      type: "boolean",
-      default: true,
       stages: [1],
     },
   ],
