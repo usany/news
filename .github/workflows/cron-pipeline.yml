@@ -51,9 +51,6 @@ jobs:
         if: ${{ !inputs.no_ocr }}
         run: uv sync --locked
 
-      - name: Build scripts
-        run: pnpm run build:scripts
-
       - name: Run pipeline
         run: |
           args=()

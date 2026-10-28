@@ -10,7 +10,6 @@
     "start": "next start",
     "lint": "next lint",
     "pipeline": "node --env-file=.env scripts/run_pipeline.ts",
-    "build:scripts": "tsc -p tsconfig.scripts.json",
     "news:crawl": "node scripts/khu_crawler.ts",
     "news:scenario": "node scripts/scenarist.ts",
     "news:build": "node scripts/news_builder.ts"
