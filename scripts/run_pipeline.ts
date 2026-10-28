@@ -46,7 +46,6 @@ interface PipelineStage {
 interface PipelineConfig {
   name: string;
   stages: PipelineStage[];
-  env: { required: string[]; dotenv: string };
   args: Array<{
     name: string;
     flag: string;
@@ -88,10 +87,6 @@ const PIPELINE_CONFIG: PipelineConfig = {
       ],
     },
   ],
-  env: {
-    required: ["GEMINI_API_KEY"],
-    dotenv: ".env",
-  },
   args: [
     {
       name: "week",
@@ -180,13 +175,6 @@ function collectStageArgs(
 // --- Execute pipeline from orchestration ---
 async function executePipeline(cliArgs: string[]): Promise<void> {
   const config = PIPELINE_CONFIG;
-
-  // Check env requirements
-  for (const key of config.env.required) {
-    if (!process.env[key]) {
-      fail(`${key} is not set (expected in .env or environment)`);
-    }
-  }
 
   // Execute each stage
   for (const stage of config.stages) {
