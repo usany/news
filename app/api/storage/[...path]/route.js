@@ -4,7 +4,7 @@ import config from '../../../../config/news.json' with { type: 'json' }
 const S3_ENDPOINT = process.env.S3_ENDPOINT ?? config.storage.endpoint
 
 export async function GET(request, { params }) {
-  const { path = [] } = params ?? {}
+  const { path = [] } = (await params) ?? {}
   const key = path.join('/')
 
   if (!key) {
