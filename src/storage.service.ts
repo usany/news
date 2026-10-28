@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { audioDuration } from './audio-duration.js';
 
 /**
  * A single item discovered in the object storage bucket.
@@ -54,6 +55,35 @@ export class StorageService {
   /** Build the directly-fetchable URL for an object key. */
   getItemUrl(key: string): string {
     return buildItemUrl(this.baseUrl, key);
+  }
+
+  /**
+   * Compute an audio object's duration in seconds (float) by reading a small
+   * header slice. Returns null when the duration cannot be determined.
+   */
+  async getAudioDuration(key: string): Promise<number | null> {
+    try {
+      const size = await this.getItemSize(key);
+      if (size <= 0) return null;
+      const end = Math.min(size - 1, 64 * 1024 - 1);
+      const header = await this.getItemRange(key, 0, end);
+      const seconds = audioDuration(key, header, size);
+      return seconds === undefined ? null : seconds;
+    } catch {
+      return null;
+    }
+  }
+
+  /** Resolve an object's size in bytes (0 when unknown/HEAD fails). */
+  async getItemSize(key: string): Promise<number> {
+    try {
+      const objectUrl = this.getItemUrl(key);
+      const res = await fetch(objectUrl, { method: 'HEAD' });
+      if (!res.ok) return 0;
+      return Number(res.headers.get('content-length') ?? 0) || 0;
+    } catch {
+      return 0;
+    }
   }
 
   /**
