@@ -25,7 +25,7 @@
   },
   "devDependencies": {
     "@opencode-ai/sdk": "^1.18.16",
-    "@types/node": "^20.0.0",
+    "@types/node": "^20.19.43",
     "@types/react": "^18.2.0",
     "typescript": "^5.3.0"
   },
