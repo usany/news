@@ -39,7 +39,7 @@ without waiting to be asked. Follow these rules:
 
 `scripts/khu_crawler.ts` (playwright, TypeScript) + `scripts/easyocr_helper.py` (easyocr, Python) 로 게시판 크롤링과 이미지 OCR 전 단계를 한 명령으로 자동 실행할 수 있다.
 
-- 실행: `npx tsx scripts/khu_crawler.ts [--week=YYYY-MM-DD] [--no-ocr]`
+- 실행: `node scripts/khu_crawler.ts [--week=YYYY-MM-DD] [--no-ocr]`
 - 산출: `_workspace/01_scraping_report.md`, `01_notice.md`, `01_notice_images/`, `02_ocr_results.md`
 - `--week` 미지정 시 오늘 날짜의 해당 주차(월~금) 수집. 5개 카테고리(일반/학사/장학/근로/행사)를 페이지 넘기며 대상 주 밖 공지가 나오면 중단. 이미지가 있는 공지는 easyocr(ko, en)로 텍스트 추출.
 
@@ -48,14 +48,14 @@ without waiting to be asked. Follow these rules:
 - `scripts/scenarist.ts` — 이번 주 공지(`_workspace/01_notice.md`)를 요약해 호스트/리포터 2인 라디오 뉴스 시나리오(`_workspace/03_news_scenario.md`) 작성 (opencode SDK).
 - `scripts/news_builder.ts` — `_workspace/03_news_scenario.md`의 호스트/리포터 대사를 Gemini **Multi-speaker TTS**(```gemini-3.1-flash-tts-preview```, GEMINI_API_KEY)로 합성해 단일 음성 파일(`_workspace/04_news_files/{week}_full_news.wav`)을 생성. 시나리오를 화자 라벨(호스트/리포터)이 붙은 대화로 보내고 `multiSpeakerVoiceConfig`로 화자별 다른 목소리를 매핑해 **단일 요청**으로 두 화자 음성이 담긴 오디오를 생성(무료쿼터 절약).
 
-  실행: `npx tsx scripts/news_builder.ts [--input=...] [--output=...] [--model=...] [--host-voice=...] [--reporter-voice=...]`
+  실행: `node scripts/news_builder.ts [--input=...] [--output=...] [--model=...] [--host-voice=...] [--reporter-voice=...]`
 
 **변경 이력:**
 
 | 날짜 | 변경 내용 | 대상 | 사유 |
 | ---- | --------- | ---- | ---- |
 | 2026-08-12 | cron 진입점을 **node-cron 기반 TypeScript 데몬**으로 전환: 기존 `cron_wrapper.sh`/`install_cron.sh`(bash) 폐기 → `cron_wrapper.ts`(node-cron으로 주 1회 스케줄을 프로세스 내에서 처리, `noOverlap`/`timezone`/로그 지원) + `install_cron.ts`(launchd LaunchAgent `com.casts.radio-news` 등록·로딩으로 데몬 상주·재부팅 유지, `--uninstall`/`--status` 지원). crontab 항목 제거, package.json의 `news:install`(`tsx scripts/install_cron.ts`) 유지 | scripts/cron_wrapper.ts, scripts/install_cron.ts, crontab, ~/Library/LaunchAgents/com.casts.radio-news.plist | cron → node-cron 데몬 + launchd 전환 |
-| 2026-08-11 | cron 진입점을 **bash로 복원**: `cron_wrapper.ts`/`install_cron.ts`(TS 버전 실행 중 `Command aborted` 문제) 폐기하고 `scripts/cron_wrapper.sh` + `scripts/install_cron.sh`(bash) 복원. cron은 `cron_wrapper.sh`가 PATH 복원 후 `npx tsx scripts/run_pipeline.ts` 실행. crontab 재등록 완료 (매주 금 22:00) | scripts/cron_wrapper.sh, scripts/install_cron.sh, crontab | cron 진입점 bash 복원 |
+| 2026-08-11 | cron 진입점을 **bash로 복원**: `cron_wrapper.ts`/`install_cron.ts`(TS 버전 실행 중 `Command aborted` 문제) 폐기하고 `scripts/cron_wrapper.sh` + `scripts/install_cron.sh`(bash) 복원. cron은 `cron_wrapper.sh`가 PATH 복원 후 `node scripts/run_pipeline.ts` 실행. crontab 재등록 완료 (매주 금 22:00) | scripts/cron_wrapper.sh, scripts/install_cron.sh, crontab | cron 진입점 bash 복원 |
 | 2026-08-11 | 파이프라인을 **TypeScript**(`scripts/run_pipeline.ts`)로 재작성: 스크립트 3개(khu_crawler→scenarist→news_builder)를 순차 실행 + 각 단계 산출물 검증(`requireFile`), 어느 단계가 실패하면 전체 파이프라인 비정상 종료(0이 아닌 exit code). cron 자동화: `scripts/install_cron.sh`로 `0 22 * * 5`(매주 금 22:00) 등록. `package.json`의 `news:pipeline`도 TS로 변경 | scripts/run_pipeline.ts, scripts/install_cron.sh, package.json, crontab | 스크립트 전 과정 파이프라이닝 + cron 예약 (TS 버전) |
 | 2026-08-11 | 세 스크립트(khu_crawler→scenarist→news_builder)를 실패 시 전체 중단되는 파이프라인으로 묶기(Bash 오케스트레이터 → 이후 TS로 대체되어 제거됨) | scripts/run_pipeline.ts | 스크립트 전 과정 파이프라이닝 |
 | 2026-08-11 | `scripts/news_builder.mts` Gemini **Multi-speaker TTS** 로 재작성: 기존 줄 단위 합성/단일모드 토글 대신 `multiSpeakerVoiceConfig`로 호스트/리포터 두 화자를 한 번의 요청에 매핑해 단일 full news 파일 생성(```gemini-3.1-flash-tts-preview```, 호스트=`Kore`, 리포터=`Puck`). 화자 구분됨 + 쿼터 절약. `tsc --noEmit` 검증 완료 | scripts/news_builder.mts | Gemini 原生 Multi-speaker TTS 사용 |

@@ -34,7 +34,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 24
           cache: pnpm
 
       - uses: astral-sh/setup-uv@v6
@@ -59,7 +59,7 @@ jobs:
           args=()
           if [ -n "${{ inputs.week }}" ]; then args+=("--week=${{ inputs.week }}"); fi
           if [ "${{ inputs.no_ocr }}" = "true" ]; then args+=(--no-ocr); fi
-          pnpm exec tsx scripts/run_pipeline.ts "${args[@]}"
+          node --env-file=.env scripts/run_pipeline.ts "${args[@]}"
 
       - name: Upload outputs
         if: always()
