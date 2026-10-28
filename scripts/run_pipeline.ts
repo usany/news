@@ -74,7 +74,7 @@ function runStage(stage: PipelineStage, stageArgs: string[]): void {
   console.log(`[${new Date().toISOString()}] STAGE ${stage.id}/3: ${stage.name}`);
   const script = path.join(ROOT, stage.script);
   const args = [...stage.args, ...stageArgs];
-  const res = spawnSync("node", [script, ...args], {
+  const res = spawnSync("npx", ["tsx", script, ...args], {
     cwd: ROOT,
     stdio: "inherit",
   });
@@ -139,16 +139,6 @@ async function executePipeline(cliArgs: string[]): Promise<void> {
   for (const key of config.env.required) {
     if (!process.env[key]) {
       fail(`${key} is not set (expected in .env or environment)`);
-    }
-  }
-
-  // Check compiled scripts exist
-  for (const stage of config.stages) {
-    const scriptPath = path.join(ROOT, stage.script);
-    try {
-      fs.statSync(scriptPath);
-    } catch {
-      fail(`compiled script not found: ${scriptPath}\n  Run: pnpm run build:scripts`);
     }
   }
 
