@@ -103,8 +103,8 @@ async function requireFile(desc: string, filePath: string): Promise<void> {
   console.log(`[${new Date().toISOString()}] PASS: ${desc} (${stat.size} bytes)`);
 }
 
-// --- Build stage args from orchestration and CLI args ---
-function buildStageArgs(
+// --- Collect stage args from orchestration and CLI args ---
+function collectStageArgs(
   stageId: number,
   config: PipelineConfig,
   cliArgs: string[]
@@ -144,7 +144,7 @@ async function executePipeline(cliArgs: string[]): Promise<void> {
 
   // Execute each stage
   for (const stage of config.stages) {
-    const stageArgs = buildStageArgs(stage.id, config, cliArgs);
+    const stageArgs = collectStageArgs(stage.id, config, cliArgs);
     runStage(stage, stageArgs);
 
     // Validate outputs
