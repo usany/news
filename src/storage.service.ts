@@ -43,6 +43,20 @@ export class StorageService {
   }
 
   /**
+   * Resolve a request path name (e.g. `2026_08_w2_full_news.wav`) to an
+   * object key. Returns the key (possibly with a `/`-separated prefix) or an
+   * empty string when the name is missing.
+   */
+  resolveKey(name: string): string {
+    return name.replace(/^\/+/, '');
+  }
+
+  /** Build the directly-fetchable URL for an object key. */
+  getItemUrl(key: string): string {
+    return buildItemUrl(this.baseUrl, key);
+  }
+
+  /**
    * Fetch the raw object listing from the bucket. Returns an array of items
    * parsed from the S3-compatible XML response.
    */
