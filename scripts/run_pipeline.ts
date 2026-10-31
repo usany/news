@@ -1,159 +1,202 @@
+#!/usr/bin/env node
 /**
- * run_pipeline.ts — News auto-production pipeline orchestrator (TypeScript).
+ * scripts/run_pipeline.ts — runs the news pipeline once, then exits.
  *
- * Runs the three stages in sequence with strict error handling. The WHOLE
- * pipeline fails (process exits non-zero, aborting the cron run) if any stage
- * fails. Each stage's output is validated before the next stage runs.
+ * Executes each stage (defined inline below) in order, stopping at the first
+ * failure and validating each stage's outputs. Scheduling is done by GitHub
+ * Actions (.github/workflows/cron-pipeline.yml), not by this script.
  *
- * Stages:
- *   1. scripts/khu_crawler.ts   → _workspace/01_notice.md, 01_notice_images/, 02_ocr_results.md
- *   2. scripts/scenarist.mts    → _workspace/03_news_scenario.md
- *   3. scripts/news_builder.mts → _workspace/04_news_files/{week}_full_news.wav
- *
- * Run (from repo root):
- *   npx tsx scripts/run_pipeline.ts
- *   npx tsx scripts/run_pipeline.ts --week=2026-08-10   # specific week
- *   npx tsx scripts/run_pipeline.ts --no-ocr            # pass --no-ocr to the crawler
- *
- * Exit codes: 0 = success, 1 = any stage failed, 2 = bad args.
+ * Run:
+ *   node scripts/run_pipeline.ts
+ *   node scripts/run_pipeline.ts --week=2026-08-10
  */
 import { spawnSync } from "node:child_process";
-import * as fsp from "node:fs/promises";
 import * as path from "node:path";
+import * as fsp from "node:fs/promises";
+import { fileURLToPath } from "node:url";
 
-// ----------------------------------------------------------------------------
-// Config
-// ----------------------------------------------------------------------------
-const ROOT = process.cwd();
-const WORK = path.join(ROOT, "_workspace");
-const NOTICE_MD = path.join(WORK, "01_notice.md");
-const SCRAPE_MD = path.join(WORK, "01_scraping_report.md");
-const SCENARIO_MD = path.join(WORK, "03_news_scenario.md");
-const OUTPUT_DIR = path.join(WORK, "04_news_files");
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+process.chdir(ROOT);
 
-interface Args {
-  week: string | null;
-  ocr: boolean;
-}
+// --- Parse args ---
+function parseArgs(argv: string[]): string[] {
+  const pipelineArgs: string[] = [];
 
-function parseArgs(argv: string[]): Args {
-  const args: Args = { week: null, ocr: true };
   for (const a of argv) {
-    if (a.startsWith("--week=")) args.week = a.slice("--week=".length);
-    else if (a === "--no-ocr") args.ocr = false;
-    else if (a === "-h" || a === "--help") {
-      console.log("usage: npx tsx scripts/run_pipeline.ts [--week=YYYY-MM-DD] [--no-ocr]");
-      process.exit(0);
+    if (a.startsWith("--week=")) {
+      pipelineArgs.push(a);
     } else {
-      fail(`unknown arg: ${a}`);
+      console.error(`unknown arg: ${a}`);
+      process.exit(2);
     }
   }
-  return args;
+  return pipelineArgs;
 }
 
+// --- Pipeline orchestration (inline config, previously pipeline-orchestration.json) ---
+interface PipelineStage {
+  id: number;
+  name: string;
+  script: string;
+  args: string[];
+  outputs: Array<{ desc: string; path: string }>;
+}
+
+interface PipelineConfig {
+  name: string;
+  stages: PipelineStage[];
+  args: Array<{
+    name: string;
+    flag: string;
+    type: string;
+    default?: boolean | string;
+    stages: number[];
+  }>;
+}
+
+const PIPELINE_CONFIG: PipelineConfig = {
+  name: "news-pipeline",
+  stages: [
+    {
+      id: 1,
+      name: "crawling KHU notice board (collector + ocr-director)",
+      script: "scripts/khu_crawler.ts",
+      args: [],
+      outputs: [
+        { desc: "notice markdown", path: "_workspace/01_notice.md" },
+        { desc: "scraping report", path: "_workspace/01_scraping_report.md" },
+      ],
+    },
+    {
+      id: 2,
+      name: "writing radio news scenario (scenarist)",
+      script: "scripts/scenarist.ts",
+      args: [],
+      outputs: [
+        { desc: "news scenario", path: "_workspace/03_news_scenario.md" },
+      ],
+    },
+    {
+      id: 3,
+      name: "synthesizing full news audio (news-builder)",
+      script: "scripts/news_builder.ts",
+      args: [],
+      outputs: [
+        { desc: "full news audio", path: "store/*_full_news.wav" },
+      ],
+    },
+  ],
+  args: [
+    {
+      name: "week",
+      flag: "--week",
+      type: "string",
+      stages: [1],
+    },
+  ],
+};
+
+// --- Fail helper ---
 function fail(msg: string): never {
-  console.error(`PIPELINE FAILED: ${msg}`);
+  console.log(`[${new Date().toISOString()}] PIPELINE FAILED: ${msg}`);
   process.exit(1);
 }
 
-function log(msg: string): void {
-  console.log(`\n[${new Date().toISOString()}] ${msg}`);
+// --- Stage runner ---
+function runStage(stage: PipelineStage, stageArgs: string[]): void {
+  console.log(`[${new Date().toISOString()}] STAGE ${stage.id}/3: ${stage.name}`);
+  const script = path.join(ROOT, stage.script);
+  const args = [...stage.args, ...stageArgs];
+  const res = spawnSync("node", [script, ...args], {
+    cwd: ROOT,
+    stdio: "inherit",
+  });
+  if (res.error) fail(`could not run stage: ${res.error.message}`);
+  if (res.status !== 0) fail(`stage exited with status ${res.status}`);
 }
 
-// ----------------------------------------------------------------------------
-// .env loader — loads KEY=VAL pairs if GEMINI_API_KEY isn't already set.
-// ----------------------------------------------------------------------------
-async function loadEnv(): Promise<void> {
-  if (process.env.GEMINI_API_KEY) return; // already in environment
-  try {
-    const raw = await fsp.readFile(path.join(ROOT, ".env"), "utf8");
-    for (const line of raw.split(/\r?\n/)) {
-      const m = /^\s*([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*)\s*$/.exec(line);
-      if (m && process.env[m[1]] === undefined) {
-        process.env[m[1]] = m[2].replace(/^["']|["']$/g, "");
+// --- Output validation ---
+async function requireFile(desc: string, filePath: string): Promise<void> {
+  // Handle glob patterns
+  if (filePath.includes("*")) {
+    const dir = path.dirname(filePath);
+    const pattern = path.basename(filePath);
+    const files = await fsp.readdir(dir).catch(() => [] as string[]);
+    const globPattern = pattern.replace(/\*/g, "");
+    const matches = files.filter((f) => f.includes(globPattern));
+    if (matches.length === 0) fail(`no files matching ${desc} at ${filePath}`);
+    const stat = await fsp.stat(path.join(dir, matches[0])).catch(() => null);
+    if (!stat || stat.size === 0) fail(`${desc} is empty`);
+    console.log(`[${new Date().toISOString()}] PASS: ${desc} (${matches[0]}, ${stat.size} bytes)`);
+    return;
+  }
+
+  const stat = await fsp.stat(filePath).catch(() => null);
+  if (!stat || stat.size === 0) fail(`${desc} missing or empty at ${filePath}`);
+  console.log(`[${new Date().toISOString()}] PASS: ${desc} (${stat.size} bytes)`);
+}
+
+// --- Collect stage args from orchestration and CLI args ---
+function collectStageArgs(
+  stageId: number,
+  config: PipelineConfig,
+  cliArgs: string[]
+): string[] {
+  const args: string[] = [];
+  const relevantArgDefs = config.args.filter((a) => a.stages.includes(stageId));
+
+  for (const def of relevantArgDefs) {
+    const cliArg = cliArgs.find(
+      (a) =>
+        a.startsWith(`${def.flag}=`) ||
+        a === def.flag
+    );
+
+    if (cliArg) {
+      if (def.type === "boolean") {
+        args.push(def.flag);
+      } else {
+        args.push(cliArg);
       }
     }
-  } catch {
-    /* .env missing — rely on environment vars */
   }
+
+  return args;
 }
 
-// ---------------------------------------------------------------------------
-// Stage runner — inherits stdio; aborts the whole pipeline on non-zero exit.
-// ---------------------------------------------------------------------------
-function runStage(stage: string, cmd: string, args: string[]): void {
-  log(stage);
-  const res = spawnSync(cmd, args, { cwd: ROOT, stdio: "inherit", shell: false });
-  if (res.error) fail(`could not run "${cmd}": ${res.error.message}`);
-  if (res.status !== 0) {
-    fail(`${stage} exited with status ${res.status ?? "unknown"}`);
+// --- Execute pipeline from orchestration ---
+async function executePipeline(cliArgs: string[]): Promise<void> {
+  const config = PIPELINE_CONFIG;
+
+  // Check env requirements directly via process.env
+  if (!process.env.GEMINI_API_KEY) {
+    fail("GEMINI_API_KEY is not set (expected in .env or environment)");
   }
+
+  // Execute each stage
+  for (const stage of config.stages) {
+    const stageArgs = collectStageArgs(stage.id, config, cliArgs);
+    runStage(stage, stageArgs);
+
+    // Validate outputs
+    for (const output of stage.outputs) {
+      const outputPath = path.join(ROOT, output.path);
+      await requireFile(output.desc, outputPath);
+    }
+  }
+
+  console.log(`[${new Date().toISOString()}] PIPELINE COMPLETE`);
 }
 
-// ---------------------------------------------------------------------------
-// Output validation — missing/empty stage output fails the pipeline.
-// ---------------------------------------------------------------------------
-async function requireFile(desc: string, file: string): Promise<void> {
-  const st = await fsp.stat(file).catch(() => null);
-  if (!st || st.size === 0) fail(`stage output missing/empty — expected ${desc} at ${file}`);
-  log(`PASS: ${desc} -> ${file} (${st!.size} bytes)`);
-}
-
-async function newestFullNews(): Promise<string | null> {
-  const files = await fsp.readdir(OUTPUT_DIR).catch(() => [] as string[]);
-  const candidates = files.filter((f) => f.endsWith("_full_news.wav"));
-  if (candidates.length === 0) return null;
-  const withTime = await Promise.all(
-    candidates.map(async (f) => {
-      const st = await fsp.stat(path.join(OUTPUT_DIR, f)).catch(() => null);
-      return { f, mtime: st ? st.mtimeMs : 0 };
-    }),
-  );
-  withTime.sort((a, b) => b.mtime - a.mtime);
-  return withTime[0].f;
-}
-
-// ---------------------------------------------------------------------------
-// Main
-// ---------------------------------------------------------------------------
+// --- Main ---
 async function main(): Promise<void> {
-  await loadEnv();
-  const args = parseArgs(process.argv.slice(2));
-
-  const crawlerArgs = ["scripts/khu_crawler.ts"];
-  if (args.week) crawlerArgs.push(`--week=${args.week}`);
-  if (!args.ocr) crawlerArgs.push("--no-ocr");
-
-  // Env guard: TTS needs the API key.
-  if (!process.env.GEMINI_API_KEY) fail("GEMINI_API_KEY is not set (expected in .env or environment)");
-
-  // STAGE 1 — collector + ocr-director
-  runStage("STAGE 1/3: crawling KHU notice board (collector + ocr-director)", "npx", ["tsx", ...crawlerArgs]);
-  await requireFile("notice markdown", NOTICE_MD);
-  await requireFile("scraping report", SCRAPE_MD);
-
-  // STAGE 2 — scenarist
-  runStage("STAGE 2/3: writing radio news scenario (scenarist)", "npx", ["tsx", "scripts/scenarist.mts"]);
-  await requireFile("news scenario", SCENARIO_MD);
-
-  // STAGE 3 — news-builder (Gemini multi-speaker TTS)
-  runStage("STAGE 3/3: synthesizing full news audio (news-builder)", "npx", ["tsx", "scripts/news_builder.mts"]);
-
-  const full = await newestFullNews();
-  if (!full) fail(`news-builder did not produce a *_full_news.wav in ${OUTPUT_DIR}`);
-  const p = path.join(OUTPUT_DIR, full);
-  const st = await fsp.stat(p).catch(() => null);
-  if (!st || st.size === 0) fail(`news audio ${p} is empty`);
-  log(`PASS: full news audio -> ${p} (${st!.size} bytes)`);
-
-  console.log("\n" + "=".repeat(60));
-  console.log(" PIPELINE COMPLETE");
-  console.log(`  week       : ${args.week ?? "<this calendar week>"}`);
-  console.log(`  news audio : ${p}`);
-  console.log("=".repeat(60));
+  const pipelineArgs = parseArgs(process.argv.slice(2));
+  console.log(`[${new Date().toISOString()}] RUN started`);
+  await executePipeline(pipelineArgs);
+  process.exit(0);
 }
 
 main().catch((err) => {
-  console.error("[run_pipeline] FATAL:", err);
+  console.log(`[${new Date().toISOString()}] FATAL: ${err instanceof Error ? err.message : String(err)}`);
   process.exit(1);
 });

@@ -1,0 +1,64 @@
+name: News pipeline (cron)
+
+on:
+  schedule:
+    # GitHub cron is always UTC.
+    - cron: "26 11 * * *"
+  workflow_dispatch:
+    inputs:
+      week:
+        description: "Week to build (YYYY-MM-DD), blank = current"
+        required: false
+        default: ""
+
+concurrency:
+  group: news-pipeline
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    env:
+      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+      S3_ENDPOINT: ${{ secrets.S3_ENDPOINT }}
+      PYTHON: ${{ github.workspace }}/.venv/bin/python
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+
+      - name: Install Node dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Playwright Chromium
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Install easyocr
+        run: uv sync --locked
+
+      - name: Run pipeline
+        run: |
+          args=()
+          if [ -n "${{ inputs.week }}" ]; then args+=("--week=${{ inputs.week }}"); fi
+          node --env-file=.env scripts/run_pipeline.ts "${args[@]}"
+
+      - name: Upload outputs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pipeline-output-${{ github.run_id }}
+          path: |
+            _workspace/
+            store/
+          if-no-files-found: ignore
+          retention-days: 14

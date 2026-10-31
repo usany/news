@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { EPISODES, formatTime } from '../lib/utils'
+import { EPISODES, formatTime, titleFromUrl } from '../lib/utils'
 import { useTheme } from '../lib/ThemeContext'
 import { getTranslation } from '../lib/i18n'
 import EpisodeList from './EpisodeList'
@@ -103,8 +103,7 @@ export default function Player() {
 
         <div className={styles.player}>
           <div className={styles.nowPlaying}>
-            <h3>{episode.title}</h3>
-            <p>{episode.podcast}</p>
+            <h3>{titleFromUrl(episode.url)}</h3>
           </div>
 
           <WaveformProgress
