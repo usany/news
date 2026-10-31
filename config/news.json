@@ -1,0 +1,20 @@
+{
+  "storageUrl": "https://objectstorage.ap-chuncheon-1.oraclecloud.com/p/MGoMTri-Fp0xs4HYW6gTTe1rAJrL2x4E0jw-wGtpMex5tYXvfzVlGKudz44VNP_A/n/ax0ym4amgnfk/b/bucket-20261002-1841/o/",
+  "files": [
+    {
+      "name": "2026_10_w4_full_news.wav",
+      "size": "19.32 MiB",
+      "uploadedAt": "Oct 26, 2026, 12:11 UTC"
+    },
+    {
+      "name": "2026_10_w5_full_news.wav",
+      "size": "18.89 MiB",
+      "uploadedAt": "Oct 31, 2026, 16:23 UTC"
+    },
+    {
+      "name": "full_news_full_news.wav",
+      "size": "15.58 MiB",
+      "uploadedAt": "Oct 24, 2026, 11:46 UTC"
+    }
+  ]
+}
