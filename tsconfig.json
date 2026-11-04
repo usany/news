@@ -16,7 +16,7 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "jsx": "preserve",
-    "incremental": true,
+    "incremental": false,
     "plugins": [
       {
         "name": "next"
@@ -24,7 +24,7 @@
     ],
     "paths": {
       "@/*": [
-        "./src/*"
+        "./*"
       ]
     }
   },
@@ -35,8 +35,9 @@
     ".next/types/**/*.ts",
     ".next/dev/types/**/*.ts",
     "**/*.mts"
-  ],
+, "app/lib/ThemeContext.jsx"  ],
   "exclude": [
-    "node_modules"
+    "node_modules",
+    "server"
   ]
 }
