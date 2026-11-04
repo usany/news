@@ -9,8 +9,6 @@ build/
 
 # Env / secrets
 .env
-.env.local
-.env.*.local
 
 # Logs
 *.log
