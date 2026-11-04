@@ -1,69 +1,76 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { EPISODES, formatTime } from '../lib/utils'
+import { fetchEpisodes, formatTime, titleFromUrl } from '../lib/utils'
+import { useTheme } from '../lib/ThemeContext'
+import { getTranslation } from '../lib/i18n'
 import EpisodeList from './EpisodeList'
 import WaveformProgress from './WaveformProgress'
 import Controls from './Controls'
 import VolumeControl from './VolumeControl'
+import DetailDropdown from './DetailDropdown'
+import ThemeToggle from './ThemeToggle'
+import LanguageToggle from './LanguageToggle'
 import styles from './Player.module.css'
 
 export default function Player() {
   const audioRef = useRef(null)
+  const [episodes, setEpisodes] = useState([])
   const [currentIndex, setCurrentIndex] = useState(0)
   const [isPlaying, setIsPlaying] = useState(false)
-  const [currentTime, setCurrentTime] = useState('0:00')
-  const [currentTimeSeconds, setCurrentTimeSeconds] = useState(0)
-  const [duration, setDuration] = useState('0:00')
-  const [durationSeconds, setDurationSeconds] = useState(0)
+  const [currentSec, setCurrentSec] = useState(0)
+  const [totalSec, setTotalSec] = useState(0)
   const [volume, setVolume] = useState(70)
+  const { language } = useTheme()
 
-  const episode = EPISODES[currentIndex]
+  const episode = episodes[currentIndex]
 
+  // Load the episode catalog from the server.
+  useEffect(() => {
+    let cancelled = false
+    fetchEpisodes()
+      .then((list) => {
+        if (!cancelled) setEpisodes(list)
+      })
+      .catch((err) => console.error('Failed to load episodes:', err))
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  // Load episode source and wire up events
   useEffect(() => {
     const audio = audioRef.current
-    if (!audio) return
+    if (!audio || !episode) return
 
     audio.src = episode.url
-    audio.volume = volume / 100
+    audio.currentTime = 0
+    setCurrentSec(0)
 
-    const updateTime = () => {
-      setCurrentTime(formatTime(audio.currentTime))
-      setCurrentTimeSeconds(audio.currentTime)
+    if (isPlaying) {
+      audio.play().catch(() => setIsPlaying(false))
     }
 
-    const updateDuration = () => {
-      setDuration(formatTime(audio.duration))
-      setDurationSeconds(audio.duration)
-    }
+    const onTime = () => setCurrentSec(audio.currentTime)
+    const onMeta = () => setTotalSec(audio.duration || 0)
+    const onEnd = () => setCurrentIndex((i) => (i + 1) % episodes.length)
 
-    const handleEnded = () => {
-      setCurrentIndex((prev) => (prev + 1) % EPISODES.length)
-    }
-
-    audio.addEventListener('timeupdate', updateTime)
-    audio.addEventListener('loadedmetadata', updateDuration)
-    audio.addEventListener('ended', handleEnded)
-
+    audio.addEventListener('timeupdate', onTime)
+    audio.addEventListener('loadedmetadata', onMeta)
+    audio.addEventListener('ended', onEnd)
     return () => {
-      audio.removeEventListener('timeupdate', updateTime)
-      audio.removeEventListener('loadedmetadata', updateDuration)
-      audio.removeEventListener('ended', handleEnded)
+      audio.removeEventListener('timeupdate', onTime)
+      audio.removeEventListener('loadedmetadata', onMeta)
+      audio.removeEventListener('ended', onEnd)
     }
-  }, [currentIndex])
+  }, [currentIndex, episodes])
 
   useEffect(() => {
-    if (audioRef.current) {
-      audioRef.current.volume = volume / 100
-    }
+    if (audioRef.current) audioRef.current.volume = volume / 100
   }, [volume])
 
-  function handlePlay() {
+  function togglePlay() {
     const audio = audioRef.current
-    if (audio.src === '') {
-      audio.src = episode.url
-    }
-
     if (audio.paused) {
       audio.play()
       setIsPlaying(true)
@@ -73,68 +80,70 @@ export default function Player() {
     }
   }
 
-  function handlePrevious() {
-    const audio = audioRef.current
-    audio.currentTime = Math.max(0, audio.currentTime - 10)
-  }
-
-  function handleNext() {
-    const audio = audioRef.current
-    audio.currentTime = Math.min(
-      audio.duration || Infinity,
-      audio.currentTime + 10
-    )
-  }
-
-  function handleSeek(newTime) {
-    if (audioRef.current) {
-      audioRef.current.currentTime = newTime
+  function handleSelect(i) {
+    if (i === currentIndex) {
+      const audio = audioRef.current
+      if (audio) {
+        audio.currentTime = 0
+        setCurrentSec(0)
+        if (audio.paused) audio.play().catch(() => setIsPlaying(false))
+        setIsPlaying(true)
+      }
+    } else {
+      setCurrentIndex(i)
+      setIsPlaying(true)
     }
   }
 
   return (
     <div className={styles.container}>
       <header className={styles.header}>
-        <h1>🎙️ Podcast Player</h1>
-        <p>Listen to your favorite podcasts</p>
+        <div className={styles.headerTitle}>
+          <h1>🎙️ {getTranslation(language, 'title')}</h1>
+          <p>{getTranslation(language, 'subtitle')}</p>
+        </div>
+        <div className={styles.toggles}>
+          <ThemeToggle />
+          <LanguageToggle />
+        </div>
       </header>
 
       <div className={styles.main}>
         <EpisodeList
-          episodes={EPISODES}
+          episodes={episodes}
           currentIndex={currentIndex}
-          onSelect={(i) => {
-            setCurrentIndex(i)
-            setIsPlaying(true)
-          }}
+          onSelect={handleSelect}
         />
 
         <div className={styles.player}>
           <div className={styles.nowPlaying}>
-            <h3>{episode.title}</h3>
-            <p>{episode.podcast}</p>
+            <h3>{episode ? titleFromUrl(episode.url) : ''}</h3>
           </div>
 
           <WaveformProgress
             audio={audioRef.current}
-            current={currentTimeSeconds}
-            currentDisplay={currentTime}
-            duration={duration}
-            durationSeconds={durationSeconds}
-            onSeek={handleSeek}
+            current={currentSec}
+            currentDisplay={formatTime(currentSec)}
+            duration={formatTime(totalSec)}
+            durationSeconds={totalSec}
+            onSeek={(t) => { if (audioRef.current) audioRef.current.currentTime = t }}
           />
 
           <Controls
             isPlaying={isPlaying}
-            onPlay={handlePlay}
-            onPrevious={handlePrevious}
-            onNext={handleNext}
+            onPlay={togglePlay}
+            onPrevious={() => { if (audioRef.current) audioRef.current.currentTime = Math.max(0, audioRef.current.currentTime - 10) }}
+            onNext={() => { if (audioRef.current) audioRef.current.currentTime = Math.min(audioRef.current.duration || Infinity, audioRef.current.currentTime + 10) }}
           />
 
           <VolumeControl
             volume={volume}
             onVolumeChange={setVolume}
           />
+
+          {episode && episode.notices && (
+            <DetailDropdown notices={episode.notices} />
+          )}
         </div>
       </div>
 
