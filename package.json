@@ -10,7 +10,6 @@
     "dev:server": "pnpm --dir server run start:dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
     "pipeline": "node --env-file=.env scripts/run_pipeline.ts",
     "news:crawl": "node --env-file=.env scripts/khu_crawler.ts",
     "news:scenario": "node --env-file=.env scripts/scenarist.ts",
