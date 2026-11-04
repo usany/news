@@ -20,6 +20,3 @@ __pycache__/
 # Pipeline runtime artifacts (kept out of VCS)
 /_workspace/
 /store/
-
-# OS
-.DS_Store

@@ -1,0 +1,206 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    padding: 20px;
+}
+
+.container {
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+header {
+    text-align: center;
+    color: white;
+    margin-bottom: 40px;
+}
+
+header h1 {
+    font-size: 2.5em;
+    margin-bottom: 10px;
+}
+
+header p {
+    opacity: 0.9;
+    font-size: 1.1em;
+}
+
+.main {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 30px;
+    margin-bottom: 30px;
+}
+
+.episodes {
+    background: white;
+    border-radius: 12px;
+    padding: 25px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+}
+
+.episodes h2 {
+    font-size: 1.5em;
+    margin-bottom: 20px;
+    color: #333;
+}
+
+.episode-item {
+    padding: 15px;
+    border: 1px solid #eee;
+    border-radius: 8px;
+    margin-bottom: 12px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.episode-item:hover {
+    background: #f8f9ff;
+    border-color: #667eea;
+}
+
+.episode-item.active {
+    background: #e8eaf6;
+    border-color: #667eea;
+}
+
+.episode-title {
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 5px;
+}
+
+.episode-podcast {
+    font-size: 0.9em;
+    color: #666;
+    margin-bottom: 8px;
+}
+
+.episode-duration {
+    font-size: 0.85em;
+    color: #999;
+}
+
+.player {
+    background: white;
+    border-radius: 12px;
+    padding: 30px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.now-playing {
+    text-align: center;
+}
+
+.now-playing h3 {
+    font-size: 1.3em;
+    color: #333;
+    margin-bottom: 5px;
+}
+
+.now-playing p {
+    color: #666;
+    font-size: 0.95em;
+}
+
+.progress-container {
+    width: 100%;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 6px;
+    background: #eee;
+    border-radius: 3px;
+    overflow: hidden;
+    margin-bottom: 8px;
+}
+
+.progress-fill {
+    height: 100%;
+    background: #667eea;
+    width: 0%;
+    transition: width 0.1s linear;
+}
+
+.time-display {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.85em;
+    color: #666;
+}
+
+.controls {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin: 20px 0;
+}
+
+button {
+    background: #667eea;
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-size: 1em;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-weight: 600;
+}
+
+button:hover {
+    background: #764ba2;
+    transform: translateY(-2px);
+}
+
+button:active {
+    transform: translateY(0);
+}
+
+.play-btn {
+    padding: 14px 30px;
+    font-size: 1.1em;
+}
+
+.small-btn {
+    padding: 10px 15px;
+    font-size: 0.9em;
+}
+
+.volume-control {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.volume-control input {
+    flex: 1;
+    height: 6px;
+    border-radius: 3px;
+    outline: none;
+}
+
+input[type="range"] {
+    accent-color: #667eea;
+}
+
+@media (max-width: 768px) {
+    .main {
+        grid-template-columns: 1fr;
+    }
+
+    header h1 {
+        font-size: 1.8em;
+    }
+}

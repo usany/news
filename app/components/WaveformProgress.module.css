@@ -13,6 +13,27 @@
   margin-bottom: 8px;
 }
 
+.progressBarContainer {
+  width: 100%;
+  margin-bottom: 8px;
+}
+
+.progressBar {
+  width: 100%;
+  height: 6px;
+  background-color: #e5e7eb;
+  border-radius: 3px;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.progressFill {
+  height: 100%;
+  background-color: #667eea;
+  border-radius: 3px;
+  transition: width 0.1s linear;
+}
+
 .times {
   display: flex;
   justify-content: space-between;

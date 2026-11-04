@@ -1,6 +1,5 @@
 'use client'
 
-import { useState } from 'react'
 import { useTheme } from '../lib/ThemeContext'
 import { getTranslation } from '../lib/i18n'
 import styles from './ThemeToggle.module.css'
