@@ -1,0 +1,129 @@
+.detailDropdown {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.toggleButton {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: #f5f5f5;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  color: #333;
+  transition: all 0.2s ease;
+}
+
+.toggleButton:hover {
+  background: #efefef;
+  border-color: #999;
+}
+
+.toggleButton:active {
+  background: #e8e8e8;
+}
+
+.label {
+  font-weight: 600;
+}
+
+.arrow {
+  display: inline-block;
+  transition: transform 0.3s ease;
+  font-size: 12px;
+}
+
+.arrow.open {
+  transform: rotate(180deg);
+}
+
+.dropdownContent {
+  margin-top: 12px;
+  animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.noticesList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.noticeItem {
+  padding: 12px;
+  background: #fafafa;
+  border-left: 3px solid #4a90e2;
+  border-radius: 4px;
+  transition: background 0.2s ease;
+}
+
+.noticeItem:hover {
+  background: #f0f6ff;
+}
+
+.noticeHeader {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.noticeTitle {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #222;
+  flex: 1;
+  line-height: 1.4;
+  word-break: break-word;
+}
+
+.linkIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  text-decoration: none;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+  flex-shrink: 0;
+}
+
+.linkIcon:hover {
+  transform: scale(1.2);
+  opacity: 0.7;
+}
+
+.linkIcon:active {
+  transform: scale(0.95);
+}
+
+.category {
+  display: inline-block;
+  padding: 4px 8px;
+  background: #e3f2fd;
+  color: #1565c0;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+}
