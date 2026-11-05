@@ -1,10 +1,8 @@
 'use client'
 
-import styles from './VolumeControl.module.css'
-
 export default function VolumeControl({ volume, onVolumeChange }) {
   return (
-    <div className={styles.control}>
+    <div className="volume-control-row">
       <span>🔊</span>
       <input
         type="range"

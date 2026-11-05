@@ -1,10 +1,10 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import styles from './WaveformProgress.module.css'
 
 export default function WaveformProgress({ audio, current, currentDisplay, duration, durationSeconds, onSeek }) {
   const canvasRef = useRef(null)
+  const progressBarRef = useRef(null)
   const animationIdRef = useRef(null)
   const [waveformData, setWaveformData] = useState(null)
   const [isDragging, setIsDragging] = useState(false)
@@ -77,12 +77,18 @@ export default function WaveformProgress({ audio, current, currentDisplay, durat
     const draw = () => {
       animationIdRef.current = requestAnimationFrame(draw)
 
+      // Read brand colors from CSS variables (respects light/dark theme)
+      const styles = getComputedStyle(document.documentElement)
+      const bgColor = styles.getPropertyValue('--bg-secondary').trim() || '#f5f5f5'
+      const barColor = styles.getPropertyValue('--primary').trim() || '#A40F16'
+      const progressColor = styles.getPropertyValue('--accent').trim() || '#C0A353'
+
       // Clear canvas
-      ctx.fillStyle = '#f3f4f6'
+      ctx.fillStyle = bgColor
       ctx.fillRect(0, 0, width, height)
 
       // Draw waveform bars
-      ctx.fillStyle = '#667eea'
+      ctx.fillStyle = barColor
 
       for (let i = 0; i < barCount; i++) {
         const value = waveformData[i] || 0
@@ -100,7 +106,7 @@ export default function WaveformProgress({ audio, current, currentDisplay, durat
       // Draw progress indicator
       if (durationSeconds > 0) {
         const progressX = (current / durationSeconds) * width
-        ctx.fillStyle = '#764ba2'
+        ctx.fillStyle = progressColor
         ctx.fillRect(Math.max(progressX - 2, 0), 0, 4, height)
       }
     }
@@ -114,8 +120,8 @@ export default function WaveformProgress({ audio, current, currentDisplay, durat
     }
   }, [current, durationSeconds, waveformData])
 
-  function handleSeek(e) {
-    const rect = canvasRef.current.getBoundingClientRect()
+  function handleSeek(e, element) {
+    const rect = element.getBoundingClientRect()
     const percent = (e.clientX - rect.left) / rect.width
     const newTime = percent * durationSeconds
     onSeek(newTime)
@@ -123,12 +129,20 @@ export default function WaveformProgress({ audio, current, currentDisplay, durat
 
   function handleMouseDown(e) {
     setIsDragging(true)
-    handleSeek(e)
+    if (canvasRef.current && e.target === canvasRef.current) {
+      handleSeek(e, canvasRef.current)
+    } else if (progressBarRef.current && e.currentTarget === progressBarRef.current) {
+      handleSeek(e, progressBarRef.current)
+    }
   }
 
   function handleMouseMove(e) {
     if (!isDragging) return
-    handleSeek(e)
+    if (e.target === canvasRef.current) {
+      handleSeek(e, canvasRef.current)
+    } else if (e.currentTarget === progressBarRef.current) {
+      handleSeek(e, progressBarRef.current)
+    }
   }
 
   function handleMouseUp() {
@@ -139,21 +153,48 @@ export default function WaveformProgress({ audio, current, currentDisplay, durat
     setIsDragging(false)
   }
 
+  function handleCanvasClick(e) {
+    handleSeek(e, canvasRef.current)
+  }
+
+  function handleProgressBarClick(e) {
+    handleSeek(e, progressBarRef.current)
+  }
+
+  const progressPercent = durationSeconds > 0 ? (current / durationSeconds) * 100 : 0
+
   return (
-    <div className={styles.container}>
+    <div className="waveform-container">
       <canvas
         ref={canvasRef}
         width={400}
         height={80}
-        className={styles.canvas}
-        onClick={handleSeek}
+        className="waveform-canvas"
+        onClick={handleCanvasClick}
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
         onMouseLeave={handleMouseLeave}
         style={{ cursor: isDragging ? 'grabbing' : 'grab' }}
       />
-      <div className={styles.times}>
+      <div 
+        ref={progressBarRef}
+        className="waveform-progress-bar-container"
+        onClick={handleProgressBarClick}
+        onMouseDown={handleMouseDown}
+        onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUp}
+        onMouseLeave={handleMouseLeave}
+        style={{ cursor: isDragging ? 'grabbing' : 'pointer' }}
+      >
+        <div className="waveform-progress-bar">
+          <div 
+            className="waveform-progress-fill"
+            style={{ width: `${progressPercent}%` }}
+          />
+        </div>
+      </div>
+      <div className="progress-bar-times">
         <span>{currentDisplay}</span>
         <span>{duration}</span>
       </div>

@@ -45,3 +45,498 @@ input[type="range"] {
     padding: 10px;
   }
 }
+
+/* ===== Player ===== */
+.player-main-container {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.player-header {
+  color: white;
+  margin-bottom: 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.player-header-title {
+  text-align: center;
+}
+
+.player-header-title h1 {
+  font-size: 2.5em;
+  margin-bottom: 10px;
+}
+
+.player-header-title p {
+  opacity: 0.9;
+  font-size: 1.1em;
+}
+
+.player-toggles {
+  display: flex;
+  gap: 20px;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.player-main {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 30px;
+  margin-bottom: 30px;
+}
+
+.player-card {
+  background: var(--bg-primary);
+  border-radius: 12px;
+  padding: 30px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  color: var(--text-primary);
+}
+
+.player-now-playing {
+  text-align: center;
+}
+
+.player-now-playing h3 {
+  font-size: 1.3em;
+  color: var(--text-primary);
+  margin-bottom: 5px;
+}
+
+.player-now-playing p {
+  color: var(--text-secondary);
+  font-size: 0.95em;
+}
+
+/* ===== EpisodeList ===== */
+.episode-list-container {
+  background: white;
+  border-radius: 12px;
+  padding: 25px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+}
+
+.episode-list-container h2 {
+  font-size: 1.5em;
+  margin-bottom: 20px;
+  color: #333;
+}
+
+.episode-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.episode-list-item {
+  padding: 15px;
+  border: 1px solid #eee;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.episode-list-item:hover {
+  background: #f8f9ff;
+  border-color: #667eea;
+}
+
+.episode-list-item.episode-list-active {
+  background: #e8eaf6;
+  border-color: #667eea;
+}
+
+.episode-content {
+  cursor: pointer;
+}
+
+.episode-title {
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 5px;
+}
+
+.episode-podcast {
+  font-size: 0.9em;
+  color: #666;
+  margin-bottom: 8px;
+}
+
+.episode-duration {
+  font-size: 0.85em;
+  color: #999;
+}
+
+/* ===== Controls ===== */
+.controls-row {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  margin: 20px 0;
+}
+
+.controls-small-btn {
+  padding: 10px 15px;
+  font-size: 0.9em;
+}
+
+.controls-play-btn {
+  padding: 14px 30px;
+  font-size: 1.1em;
+}
+
+/* ===== VolumeControl ===== */
+.volume-control-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.volume-control-row input {
+  flex: 1;
+  height: 6px;
+  border-radius: 3px;
+  outline: none;
+}
+
+/* ===== ProgressBar ===== */
+.progress-bar-container {
+  width: 100%;
+}
+
+.progress-bar-track {
+  width: 100%;
+  height: 6px;
+  background: #eee;
+  border-radius: 3px;
+  overflow: hidden;
+  margin-bottom: 8px;
+  cursor: pointer;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  background: #667eea;
+  width: 0%;
+  transition: width 0.1s linear;
+}
+
+.progress-bar-times {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.9em;
+  color: #333;
+  padding: 8px 0;
+  font-weight: 500;
+}
+
+.progress-bar-times span {
+  font-family: monospace;
+}
+
+/* ===== WaveformProgress ===== */
+.waveform-container {
+  width: 100%;
+}
+
+.waveform-canvas {
+  width: 100%;
+  height: auto;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  display: block;
+  cursor: pointer;
+  background: #f9fafb;
+  margin-bottom: 8px;
+}
+
+.waveform-progress-bar-container {
+  width: 100%;
+  margin-bottom: 8px;
+}
+
+.waveform-progress-bar {
+  width: 100%;
+  height: 6px;
+  background-color: #e5e7eb;
+  border-radius: 3px;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.waveform-progress-fill {
+  height: 100%;
+  background-color: #667eea;
+  border-radius: 3px;
+  transition: width 0.1s linear;
+}
+
+/* ===== DetailDropdown ===== */
+.detail-dropdown {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.detail-dropdown-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: #f5f5f5;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  color: #333;
+  transition: all 0.2s ease;
+}
+
+.detail-dropdown-toggle:hover {
+  background: #efefef;
+  border-color: #999;
+}
+
+.detail-dropdown-toggle:active {
+  background: #e8e8e8;
+}
+
+.detail-dropdown-label {
+  font-weight: 600;
+}
+
+.detail-dropdown-arrow {
+  display: inline-block;
+  transition: transform 0.3s ease;
+  font-size: 12px;
+}
+
+.detail-dropdown-arrow.detail-dropdown-open {
+  transform: rotate(180deg);
+}
+
+.detail-dropdown-content {
+  margin-top: 12px;
+  animation: dropdown-slide-down 0.3s ease;
+}
+
+@keyframes dropdown-slide-down {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.notices-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.notice-item {
+  padding: 12px;
+  background: #fafafa;
+  border-left: 3px solid #4a90e2;
+  border-radius: 4px;
+  transition: background 0.2s ease;
+}
+
+.notice-item:hover {
+  background: #f0f6ff;
+}
+
+.notice-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.notice-title {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #222;
+  flex: 1;
+  line-height: 1.4;
+  word-break: break-word;
+}
+
+.notice-link-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  text-decoration: none;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+  flex-shrink: 0;
+}
+
+.notice-link-icon:hover {
+  transform: scale(1.2);
+  opacity: 0.7;
+}
+
+.notice-link-icon:active {
+  transform: scale(0.95);
+}
+
+.notice-category {
+  display: inline-block;
+  padding: 4px 8px;
+  background: #e3f2fd;
+  color: #1565c0;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+/* ===== ThemeToggle / LanguageToggle ===== */
+.toggle-container {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.toggle-label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.toggle-button-group {
+  display: flex;
+  border-radius: 0.375rem;
+  border: 1px solid var(--border);
+  background: var(--bg-secondary);
+  overflow: hidden;
+}
+
+.toggle-button {
+  padding: 0.375rem 0.75rem;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.toggle-button:hover {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+}
+
+.toggle-button.toggle-active {
+  background: var(--primary);
+  color: white;
+}
+
+.toggle-button + .toggle-button {
+  border-left: 1px solid var(--border);
+}
+
+.toggle-dropdown {
+  position: relative;
+}
+
+.toggle-dropdown-button {
+  padding: 0.375rem 0.75rem;
+  border: 1px solid var(--border);
+  background: var(--bg-secondary);
+  border-radius: 0.375rem;
+  cursor: pointer;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  transition: all 0.2s ease;
+}
+
+.toggle-dropdown-button:hover {
+  background: var(--bg-tertiary);
+  border-color: var(--primary);
+}
+
+.toggle-dropdown-menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 0.25rem;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 0.375rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  z-index: 50;
+  min-width: 120px;
+}
+
+.toggle-menu-item {
+  padding: 0.5rem 0.75rem;
+  border: none;
+  background: transparent;
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.toggle-menu-item:hover {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+}
+
+.toggle-menu-item.toggle-active {
+  background: var(--primary);
+  color: white;
+}
+
+.toggle-menu-item + .toggle-menu-item {
+  border-top: 1px solid var(--border);
+}
+
+/* ===== Player responsive ===== */
+@media (max-width: 768px) {
+  .player-main {
+    grid-template-columns: 1fr;
+  }
+
+  .player-header-title h1 {
+    font-size: 1.8em;
+  }
+
+  .player-toggles {
+    gap: 10px;
+  }
+}
