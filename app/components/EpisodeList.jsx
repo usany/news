@@ -1,8 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { getAudioDuration } from '../lib/utils'
-import styles from './EpisodeList.module.css'
+import { getAudioDuration, titleFromUrl } from '../lib/utils'
 
 export default function EpisodeList({ episodes, currentIndex, onSelect }) {
   const [durations, setDurations] = useState({})
@@ -17,18 +16,18 @@ export default function EpisodeList({ episodes, currentIndex, onSelect }) {
   }, [episodes, durations])
 
   return (
-    <div className={styles.container}>
+    <div className="episode-list-container">
       <h2>Episodes</h2>
-      <div className={styles.list}>
+      <div className="episode-list">
         {episodes.map((ep, i) => (
           <div
             key={i}
-            className={`${styles.item} ${i === currentIndex ? styles.active : ''}`}
-            onClick={() => onSelect(i)}
+            className={`episode-list-item ${i === currentIndex ? 'episode-list-active' : ''}`}
           >
-            <div className={styles.title}>{ep.title}</div>
-            <div className={styles.podcast}>{ep.podcast}</div>
-            <div className={styles.duration}>⏱ {durations[i] || '0:00'}</div>
+            <div className="episode-content" onClick={() => onSelect(i)}>
+              <div className="episode-title">{titleFromUrl(ep.url)}</div>
+              <div className="episode-duration">⏱ {durations[i] || '0:00'}</div>
+            </div>
           </div>
         ))}
       </div>

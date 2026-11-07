@@ -1,7 +1,5 @@
 'use client'
 
-import styles from './ProgressBar.module.css'
-
 export default function ProgressBar({ current, currentDisplay, duration, durationSeconds, onSeek }) {
   function handleSeek(e) {
     const rect = e.currentTarget.getBoundingClientRect()
@@ -13,11 +11,11 @@ export default function ProgressBar({ current, currentDisplay, duration, duratio
   const progress = durationSeconds ? (current / durationSeconds) * 100 : 0
 
   return (
-    <div className={styles.container}>
-      <div className={styles.bar} onClick={handleSeek}>
-        <div className={styles.fill} style={{ width: `${progress}%` }} />
+    <div className="progress-bar-container">
+      <div className="progress-bar-track" onClick={handleSeek}>
+        <div className="progress-bar-fill" style={{ width: `${progress}%` }} />
       </div>
-      <div className={styles.times}>
+      <div className="progress-bar-times">
         <span>{currentDisplay}</span>
         <span>{duration}</span>
       </div>
