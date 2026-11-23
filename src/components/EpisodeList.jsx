@@ -1,5 +1,3 @@
-'use client'
-
 import { useEffect, useState } from 'react'
 import { getAudioDuration, titleFromUrl } from '../lib/utils'
 

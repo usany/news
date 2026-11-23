@@ -1,7 +1,7 @@
 // The catalog is served by the standalone NestJS server (see ../server).
 // During local development it lives at http://localhost:4000; override with
-// NEXT_PUBLIC_API_BASE if you deploy the server to another origin.
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? 'http://localhost:4000'
+// VITE_API_BASE if you deploy the server to another origin.
+const API_BASE = import.meta.env.VITE_API_BASE ?? 'http://localhost:4000'
 
 export async function fetchEpisodes() {
   const res = await fetch(`${API_BASE}/route`, { cache: 'no-store' })

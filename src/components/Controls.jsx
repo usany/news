@@ -1,5 +1,3 @@
-'use client'
-
 export default function Controls({ isPlaying, onPlay, onPrevious, onNext }) {
   return (
     <div className="controls-row">

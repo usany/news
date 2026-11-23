@@ -1,5 +1,3 @@
-'use client'
-
 export default function VolumeControl({ volume, onVolumeChange }) {
   return (
     <div className="volume-control-row">

@@ -1,7 +1,5 @@
-'use client';
-
 import { useState } from 'react';
-import { AVAILABLE_VOICES } from '@/app/lib/voices';
+import { AVAILABLE_VOICES } from '../lib/voices';
 
 interface Speaker {
   name: string;

@@ -1,4 +1,4 @@
-import MultiSpeakerTTS from '@/app/components/MultiSpeakerTTS';
+import MultiSpeakerTTS from '../components/MultiSpeakerTTS';
 
 export default function TTSPage() {
   return (
