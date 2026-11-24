@@ -27,31 +27,32 @@
  *   npx tsx scripts/news_builder.mts --host-voice=Kore --reporter-voice=Puck
  *   npx tsx scripts/news_builder.mts --input=... --output=...
  */
+import * as fs from "node:fs";
 import * as fsp from "node:fs/promises";
-import * as fss from "node:fs";
-import * as os from "node:os";
 import * as path from "node:path";
-import { spawnSync } from "node:child_process";
+import { fileURLToPath } from "node:url";
+import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 
 // ----------------------------------------------------------------------------
 // Config
 // ----------------------------------------------------------------------------
-const ROOT = process.cwd();
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const WORK = path.join(ROOT, "_workspace");
 const DEFAULT_INPUT = path.join(WORK, "03_news_scenario.md");
-const DEFAULT_OUTPUT_DIR = path.join(WORK, "04_news_files");
 
-const DEFAULT_MODEL = "gemini-3.1-flash-tts-preview";
+const DEFAULT_MODEL = "gemini-3.8-flash-tts";
 const DEFAULT_HOST_VOICE = "Kore";
 const DEFAULT_REPORTER_VOICE = "Puck";
+const DEFAULT_OUTPUT_DIR = path.join(ROOT, "store");
+
+// Oracle Cloud Object Storage (S3-compatible API). Configured via `.env`:
+// S3_REGION, S3_NAMESPACE, S3_BUCKET, S3_ACCESS_KEY, S3_SECRET_KEY.
+// S3_ENDPOINT is an optional override of the derived endpoint URL.
 
 const WEEK_ORDINALS: Record<string, string> = {
   첫째: "w1", 둘째: "w2", 셋째: "w3", 넷째: "w4", 다섯째: "w5", 여섯째: "w6",
+  "1째": "w1", "2째": "w2", "3째": "w3", "4째": "w4", "5째": "w5", "6째": "w6",
 };
-
-const SAMPLE_RATE = 24000;
-const NUM_CHANNELS = 1;
-const BITS_PER_SAMPLE = 16;
 
 interface Options {
   input: string;
@@ -101,13 +102,16 @@ async function loadApiKey(): Promise<string | null> {
   return null;
 }
 
-/** Derive the week prefix like `2026_08_w2` from the scenario's first line. */
+/** Derive the week prefix like `2026_10_w4` from the scenario's title line. */
 async function weekPrefix(scenarioPath: string): Promise<string | null> {
   try {
-    const first = (await fsp.readFile(scenarioPath, "utf8")).split("\n", 1)[0];
-    const m = first.match(/(\d{4})년\s*(\d{1,2})월\s*([가-힣]+) 주/);
+    const text = await fsp.readFile(scenarioPath, "utf8");
+    // Match titles like "2026년 10월 4째 주" or "2026년 8월 둘째 주".
+    const m = text.match(/(\d{4})년\s*(\d{1,2})월\s*(\d{1,2}째|[가-힣]+) ?주/);
     if (m) {
-      const w = WEEK_ORDINALS[m[3]] ?? "w1";
+      const ord = m[3];
+      const numMatch = ord.match(/^(\d{1,2})/);
+      const w = numMatch ? `w${numMatch[1]}` : WEEK_ORDINALS[ord] ?? "w1";
       return `${m[1]}_${String(parseInt(m[2], 10)).padStart(2, "0")}_${w}`;
     }
   } catch {
@@ -130,32 +134,11 @@ function parseScenario(markdown: string): Array<[string, string]> {
 function buildConversation(lines: Array<[string, string]>): string {
   const speakers = ["호스트", "리포터"];
   const dialogue = lines.map(([sp, text]) => `${sp}: ${text}`).join("\n");
-  return `TTS the following conversation between 호스트 and 리포터:\n${dialogue}\n\n(speakers: ${speakers.join(", ")})`;
-}
-
-/** Build the wav header for raw PCM L16/SAMPLE_RATE mono. */
-function wavHeader(pcmLength: number): Buffer {
-  const byteRate = SAMPLE_RATE * NUM_CHANNELS * (BITS_PER_SAMPLE / 8);
-  const blockAlign = NUM_CHANNELS * (BITS_PER_SAMPLE / 8);
-  const header = Buffer.alloc(44);
-  header.write("RIFF", 0);
-  header.writeUInt32LE(36 + pcmLength, 4);
-  header.write("WAVE", 8);
-  header.write("fmt ", 12);
-  header.writeUInt32LE(16, 16); // fmt chunk size
-  header.writeUInt16LE(1, 20); // PCM
-  header.writeUInt16LE(NUM_CHANNELS, 22);
-  header.writeUInt32LE(SAMPLE_RATE, 24);
-  header.writeUInt32LE(byteRate, 28);
-  header.writeUInt16LE(blockAlign, 32);
-  header.writeUInt16LE(BITS_PER_SAMPLE, 34);
-  header.write("data", 36);
-  header.writeUInt32LE(pcmLength, 40);
-  return header;
+  return `TTS the following conversation between college student 호스트 and college student 리포터:\n${dialogue}\n\n(speakers: ${speakers.join(", ")})`;
 }
 
 /**
- * Call the Gemini TTS generateContent endpoint with multi-speaker voice config.
+ * Call the Gemini TTS Interactions API directly.
  * Returns the audio bytes + mime type.
  */
 async function synthesizeMultiSpeaker(
@@ -165,90 +148,171 @@ async function synthesizeMultiSpeaker(
   reporterVoice: string,
   text: string,
 ): Promise<{ mimeType: string; data: Buffer }> {
-  const url =
-    `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}` +
-    `:generateContent?key=${encodeURIComponent(key)}`;
+  const url = `https://generativelanguage.googleapis.com/v1beta/interactions?key=${key}`;
+
+  // Build the content with multi-speaker annotations
+  const content: Array<{
+    type: string;
+    text: string;
+    annotations?: Array<{
+      type: string;
+      speaker?: string;
+    }>;
+  }> = [];
+
+  // Parse speaker lines and build annotated content
+  const lines = text.split("\n");
+  for (const line of lines) {
+    const hostMatch = line.match(/^호스트:\s*(.+)$/);
+    const reporterMatch = line.match(/^리포터:\s*(.+)$/);
+
+    if (hostMatch) {
+      content.push({
+        type: "text",
+        text: hostMatch[1],
+        annotations: [
+          {
+            type: "speech_metadata",
+            speaker: "호스트",
+          },
+        ],
+      });
+    } else if (reporterMatch) {
+      content.push({
+        type: "text",
+        text: reporterMatch[1],
+        annotations: [
+          {
+            type: "speech_metadata",
+            speaker: "리포터",
+          },
+        ],
+      });
+    }
+  }
 
   const payload = {
-    contents: [{ parts: [{ text }] }],
-    generationConfig: {
-      responseModalities: ["AUDIO"],
-      speechConfig: {
-        multiSpeakerVoiceConfig: {
-          speakerVoiceConfigs: [
-            {
-              speaker: "호스트",
-              voiceConfig: { prebuiltVoiceConfig: { voiceName: hostVoice } },
-            },
-            {
-              speaker: "리포터",
-              voiceConfig: { prebuiltVoiceConfig: { voiceName: reporterVoice } },
-            },
-          ],
-        },
+    model,
+    input: [
+      {
+        type: "user_input",
+        content,
+      },
+    ],
+    response_format: {
+      type: "audio",
+    },
+    generation_config: {
+      speech_config: {
+        speakers: [
+          { speaker: "호스트", voice: hostVoice },
+          { speaker: "리포터", voice: reporterVoice },
+        ],
       },
     },
   };
 
-  const res = await fetch(url, {
+  const response = await fetch(url, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+    },
     body: JSON.stringify(payload),
+    // Prevent silent stalls on CI runners; fail loudly so retry kicks in.
+    // signal: AbortSignal.timeout(180_000),
   });
 
-  if (!res.ok) {
-    throw new Error(`Gemini API HTTP ${res.status}: ${await res.text()}`);
+  if (!response.ok) {
+    const text = await response.text();
+    throw new Error(`${response.status} status code (${text})`);
   }
 
-  const json: any = await res.json();
-  const candidates = json?.candidates;
-  if (!Array.isArray(candidates) || candidates.length === 0) {
-    throw new Error(`Gemini API returned no candidates: ${JSON.stringify(json)}`);
-  }
-  const parts = candidates[0]?.content?.parts ?? [];
-  for (const part of parts) {
-    if (part?.inlineData?.data) {
-      return {
-        mimeType: part.inlineData.mimeType ?? "audio/L16",
-        data: Buffer.from(part.inlineData.data, "base64"),
-      };
-    }
-  }
-  throw new Error(`Gemini API returned no audio: ${JSON.stringify(json)}`);
-}
+  const responseJson = await response.json() as any;
 
-/** Convert audio bytes (given their mimeType) into a full WAV file buffer. */
-function toWav(mimeType: string, audio: Buffer): Buffer {
-  const mime = mimeType.toLowerCase();
-
-  if (mime.includes("wav")) return audio;
-
-  if (mime.includes("mp3") || mime.includes("mpeg")) {
-    const mp3 = path.join(os.tmpdir(), `news_builder_${Date.now()}_${Math.random().toString(36).slice(2)}.mp3`);
-    const wav = path.join(os.tmpdir(), `news_builder_${Date.now()}_${Math.random().toString(36).slice(2)}.wav`);
-    fss.writeFileSync(mp3, audio);
-    try {
-      convertMp3ToWav(mp3, wav);
-      return fss.readFileSync(wav);
-    } finally {
-      fss.rmSync(mp3, { force: true });
-      fss.rmSync(wav, { force: true });
+  // Extract audio from ALL response steps. The interactions API may split a
+  // long generation across multiple `model_output` steps (especially under
+  // load/latency, e.g. on GitHub Actions runners). Taking only the first step
+  // truncates the scenario, which is why the audio "doesn't finish" in CI.
+  const audioChunks: Buffer[] = [];
+  if (responseJson.steps && Array.isArray(responseJson.steps)) {
+    for (const step of responseJson.steps) {
+      if (step.type === "model_output" && step.content) {
+        for (const content of step.content) {
+          if (content.type === "audio" && content.data) {
+            audioChunks.push(Buffer.from(content.data, "base64"));
+          }
+        }
+      }
     }
   }
 
-  // Raw PCM L16 / SAMPLE_RATE / mono — wrap with a wav header.
-  return Buffer.concat([wavHeader(audio.length), audio]);
+  if (audioChunks.length === 0) {
+    throw new Error("Gemini API returned no audio data in response");
+  }
+
+  console.log(
+    `[news_builder] synthesized ${audioChunks.length} audio step(s) (total ${audioChunks.reduce((n, b) => n + b.length, 0)} bytes)`,
+  );
+
+  return {
+    mimeType: audioChunks.length === 1 ? "audio/wav" : "audio/wav",
+    data: Buffer.concat(audioChunks),
+  };
 }
 
-/** Convert an MP3 file to WAV using macOS `afconvert`. */
-function convertMp3ToWav(mp3Path: string, wavPath: string): void {
-  const r = spawnSync("afconvert", ["-f", "WAVE", "-d", "LEI16", mp3Path, wavPath], {
-    encoding: "utf8",
-    timeout: 300_000,
-  });
-  if (r.status !== 0) {
-    throw new Error(`afconvert failed: ${r.stderr?.trim() || r.error?.message || "unknown"}`);
+interface S3Config {
+  endpoint: string;
+  region: string;
+  bucket: string;
+  accessKeyId: string;
+  secretAccessKey: string;
+}
+
+/**
+ * Build the S3 config from `.env` vars. Returns null when any required var
+ * is missing, in which case the script falls back to a local save.
+ * `S3_ENDPOINT` overrides the derived Oracle compatibility endpoint.
+ */
+function loadS3Config(): S3Config | null {
+  const env = process.env;
+  const region = env.S3_REGION;
+  const namespace = env.S3_NAMESPACE;
+  const bucket = env.S3_BUCKET;
+  const accessKeyId = env.S3_ACCESS_KEY;
+  const secretAccessKey = env.S3_SECRET_KEY;
+  if (!region || !namespace || !bucket || !accessKeyId || !secretAccessKey) {
+    return null;
   }
+  const endpoint =
+    env.S3_ENDPOINT ??
+    `https://${namespace}.compat.objectstorage.${region}.oraclecloud.com`;
+  return { endpoint, region, bucket, accessKeyId, secretAccessKey };
+}
+
+/** Upload the wav to the configured Oracle Object Storage bucket. */
+async function uploadToS3(
+  wav: Buffer,
+  filename: string,
+  cfg: S3Config,
+): Promise<string> {
+  const client = new S3Client({
+    region: cfg.region,
+    endpoint: cfg.endpoint,
+    forcePathStyle: true,
+    credentials: {
+      accessKeyId: cfg.accessKeyId,
+      secretAccessKey: cfg.secretAccessKey,
+    },
+  });
+  await client.send(
+    new PutObjectCommand({
+      Bucket: cfg.bucket,
+      Key: filename,
+      Body: wav,
+      ContentType: "audio/wav",
+    }),
+  );
+  return `${cfg.endpoint}/${cfg.bucket}/${filename}`;
 }
 
 /** Synthesize, retrying transient API errors and honoring RetryInfo delays. */
@@ -302,10 +366,6 @@ async function main() {
 
   const lines = parseScenario(scenario);
   const prompt = buildConversation(lines);
-  const outPath = path.join(
-    opts.outputDir,
-    `${(await weekPrefix(opts.input)) ?? "full_news"}_full_news.wav`,
-  );
 
   console.log(
     `[news_builder] ${lines.length} speaker lines (${prompt.length} chars) → single multi-speaker TTS call`,
@@ -314,7 +374,6 @@ async function main() {
     `[news_builder] model=${opts.model} | host=${opts.hostVoice}, reporter=${opts.reporterVoice}`,
   );
 
-  await fsp.mkdir(opts.outputDir, { recursive: true });
   const { mimeType, data } = await synthesizeWithRetry(
     key,
     opts.model,
@@ -322,14 +381,23 @@ async function main() {
     opts.reporterVoice,
     prompt,
   );
-  const wav = toWav(mimeType, data);
-  fss.writeFileSync(outPath, wav);
 
-  const seconds = wav.subarray(44).length / (SAMPLE_RATE * 2);
-  const bytes = fss.statSync(outPath).size;
-  console.log(
-    `[news_builder] OK ${outPath} (${bytes} bytes, ~${seconds.toFixed(1)}s, ${mimeType})`,
-  );
+  const filename = `${(await weekPrefix(opts.input)) ?? "full_news"}_full_news.wav`;
+
+  const s3 = loadS3Config();
+  if (s3) {
+    const url = await uploadToS3(data, filename, s3);
+    console.log(
+      `[news_builder] ✓ Storage upload SUCCESS: ${url} (${data.length} bytes, ${mimeType})`,
+    );
+  } else {
+    await fsp.mkdir(opts.outputDir, { recursive: true });
+    const outPath = path.join(opts.outputDir, filename);
+    fs.writeFileSync(outPath, data);
+    console.log(
+      `[news_builder] ✓ Saved locally: ${outPath} (${data.length} bytes, ${mimeType})`,
+    );
+  }
 }
 
 main().catch((err) => {
