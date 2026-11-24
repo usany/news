@@ -1,5 +1,3 @@
-'use client'
-
 import { useTheme } from '../lib/ThemeContext'
 import { getTranslation } from '../lib/i18n'
 

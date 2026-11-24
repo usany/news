@@ -1,5 +1,3 @@
-'use client'
-
 import { useEffect, useRef, useState } from 'react'
 import { fetchEpisodes, formatTime, titleFromUrl } from '../lib/utils'
 import { useTheme } from '../lib/ThemeContext'

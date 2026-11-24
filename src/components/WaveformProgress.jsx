@@ -1,5 +1,3 @@
-'use client'
-
 import { useEffect, useRef, useState } from 'react'
 
 export default function WaveformProgress({ audio, current, currentDisplay, duration, durationSeconds, onSeek }) {

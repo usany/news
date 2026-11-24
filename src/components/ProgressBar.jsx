@@ -1,5 +1,3 @@
-'use client'
-
 export default function ProgressBar({ current, currentDisplay, duration, durationSeconds, onSeek }) {
   function handleSeek(e) {
     const rect = e.currentTarget.getBoundingClientRect()
